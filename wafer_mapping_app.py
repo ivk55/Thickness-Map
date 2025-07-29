@@ -82,7 +82,7 @@ class EquipmentConfig:
         self.new_efem_angles = {
             'LP1': {'side1': 336, 'side2': 204},
             'LP2': {'side1': 336, 'side2': 204},
-            'LP3': {'side1': 180, 'side2': 156}
+            'LP3': {'side1': 156, 'side2': 24}
         }
         
         
