@@ -494,11 +494,11 @@ class WaferMapping:
         side1_std = np.std(side1_data, ddof=1)
         side1_rng = side1_max - side1_min
             
-            stats_text1 = f"AVG = {side1_avg:.1f}nm\nRNG = {side1_rng:.1f}nm\nSTD = {side1_std:.1f}nm\nVAR = {side1_var:.1f}nm²"
+        stats_text1 = f"AVG = {side1_avg:.1f}nm\nRNG = {side1_rng:.1f}nm\nSTD = {side1_std:.1f}nm\nVAR = {side1_var:.1f}nm²"
             
-            ax1.text(0.02, 0.98, stats_text1, transform=ax1.transAxes, 
-                    fontsize=10, verticalalignment='top',
-                    bbox=dict(boxstyle="round,pad=0.3", facecolor='white', alpha=0.8))
+        ax1.text(0.02, 0.98, stats_text1, transform=ax1.transAxes, 
+                fontsize=10, verticalalignment='top',
+                bbox=dict(boxstyle="round,pad=0.3", facecolor='white', alpha=0.8))
         
         # Side2 통계 정보
         side2_data = result['Z1']  # Side2 데이터 사용
@@ -508,11 +508,11 @@ class WaferMapping:
         side2_std = np.std(side2_data, ddof=1)
         side2_rng = side2_max - side2_min
                 
-            stats_text2 = f"AVG = {side2_avg:.1f}nm\nRNG = {side2_rng:.1f}nm\nSTD = {side2_std:.1f}nm\nVAR = {side2_var:.1f}nm²"
+        stats_text2 = f"AVG = {side2_avg:.1f}nm\nRNG = {side2_rng:.1f}nm\nSTD = {side2_std:.1f}nm\nVAR = {side2_var:.1f}nm²"
             
-            ax2.text(0.02, 0.98, stats_text2, transform=ax2.transAxes, 
-                    fontsize=10, verticalalignment='top',
-                    bbox=dict(boxstyle="round,pad=0.3", facecolor='white', alpha=0.8))
+        ax2.text(0.02, 0.98, stats_text2, transform=ax2.transAxes, 
+                fontsize=10, verticalalignment='top',
+                bbox=dict(boxstyle="round,pad=0.3", facecolor='white', alpha=0.8))
 
 
         with col_stat1:
