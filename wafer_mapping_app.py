@@ -483,6 +483,7 @@ class WaferMapping:
         ax2.grid(True, alpha=0.3)
         ax2.set_xlim(-self.wafer_radius - margin, self.wafer_radius + margin)
         ax2.set_ylim(-self.wafer_radius - margin, self.wafer_radius + margin)
+        col_stat1, col_stat2 = st.columns(2)
         
         # 통계 정보 계산 및 추가
         side1_data = result['Z']  # Side1 데이터 사용
