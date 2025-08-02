@@ -483,19 +483,16 @@ class WaferMapping:
         ax2.grid(True, alpha=0.3)
         ax2.set_xlim(-self.wafer_radius - margin, self.wafer_radius + margin)
         ax2.set_ylim(-self.wafer_radius - margin, self.wafer_radius + margin)
-        
-        # 통계 정보 계산 및 추가
-        side1_data = result['zq_side1'][~np.isnan(result['zq_side1'])]
-        side2_data = result['zq_side2'][~np.isnan(result['zq_side2'])]
+
+        col_stat1, col_stat2 = st.columns(2)
         
         # Side1 통계 정보
-        if len(side1_data) > 0:
-            side1_avg = np.mean(side1_data)
-            side1_rng = np.max(side1_data) - np.min(side1_data)
-            side1_std = np.std(side1_data, ddof=1)
-            side1_var = np.var(side1_data, ddof=1)
-            side1_min = np.min(side1_data)
-            side1_max = np.max(side1_data)
+        side1_data = result['Z']  # Side1 데이터 사용
+        side1_min = np.min(side1_data)
+        side1_max = np.max(side1_data)
+        side1_avg = np.mean(side1_data)
+        side1_std = np.std(side1_data, ddof=1)
+        side1_rng = side1_max - side1_min
             
             stats_text1 = f"AVG = {side1_avg:.1f}nm\nRNG = {side1_rng:.1f}nm\nSTD = {side1_std:.1f}nm\nVAR = {side1_var:.1f}nm²"
             
@@ -504,19 +501,31 @@ class WaferMapping:
                     bbox=dict(boxstyle="round,pad=0.3", facecolor='white', alpha=0.8))
         
         # Side2 통계 정보
-        if len(side2_data) > 0:
-            side2_avg = np.mean(side2_data)
-            side2_rng = np.max(side2_data) - np.min(side2_data)
-            side2_std = np.std(side2_data, ddof=1)
-            side2_var = np.var(side2_data, ddof=1)
-            side2_min = np.min(side2_data)
-            side2_max = np.max(side2_data)
-            
+        side2_data = result['Z1']  # Side2 데이터 사용
+        side2_min = np.min(side2_data)
+        side2_max = np.max(side2_data)
+        side2_avg = np.mean(side2_data)
+        side2_std = np.std(side2_data, ddof=1)
+        side2_rng = side2_max - side2_min
+                
             stats_text2 = f"AVG = {side2_avg:.1f}nm\nRNG = {side2_rng:.1f}nm\nSTD = {side2_std:.1f}nm\nVAR = {side2_var:.1f}nm²"
             
             ax2.text(0.02, 0.98, stats_text2, transform=ax2.transAxes, 
                     fontsize=10, verticalalignment='top',
                     bbox=dict(boxstyle="round,pad=0.3", facecolor='white', alpha=0.8))
+
+
+        with col_stat1:
+            st.markdown(f"**{side_names['side1']}**")
+            st.metric("평균", f"{side1_avg:.2f} nm")
+            st.metric("표준편차", f"{side1_std:.2f} nm")
+            st.metric("범위", f"{side1_min:.1f} ~ {side1_max:.1f} nm")
+
+        with col_stat2:
+            st.markdown(f"**{side_names['side2']}**")
+            st.metric("평균", f"{side2_avg:.2f} nm")
+            st.metric("표준편차", f"{side2_std:.2f} nm")
+            st.metric("범위", f"{side2_min:.1f} ~ {side2_max:.1f} nm")
         
         plt.tight_layout()
         return fig
