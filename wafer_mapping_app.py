@@ -494,6 +494,8 @@ class WaferMapping:
             side1_rng = np.max(side1_data) - np.min(side1_data)
             side1_std = np.std(side1_data, ddof=1)
             side1_var = np.var(side1_data, ddof=1)
+            side1_min = np.min(side1_data)
+            side1_max = np.max(side1_data)
             
             stats_text1 = f"AVG = {side1_avg:.1f}nm\nRNG = {side1_rng:.1f}nm\nSTD = {side1_std:.1f}nm\nVAR = {side1_var:.1f}nm²"
             
@@ -507,6 +509,8 @@ class WaferMapping:
             side2_rng = np.max(side2_data) - np.min(side2_data)
             side2_std = np.std(side2_data, ddof=1)
             side2_var = np.var(side2_data, ddof=1)
+            side2_min = np.min(side2_data)
+            side2_max = np.max(side2_data)
             
             stats_text2 = f"AVG = {side2_avg:.1f}nm\nRNG = {side2_rng:.1f}nm\nSTD = {side2_std:.1f}nm\nVAR = {side2_var:.1f}nm²"
             
