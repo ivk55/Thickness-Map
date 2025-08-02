@@ -398,7 +398,7 @@ class WaferMapping:
             ax.set_ylim(-self.wafer_radius - margin, self.wafer_radius + margin)
             
             # 통계 정보 추가
-            valid_data = thk_map[~np.isnan(thk_map)]
+            valid_data = result['thk_data'][dataset_idx]  # 실제 25개 THK 측정값
             if len(valid_data) > 0:
                 avg = np.mean(valid_data)
                 rng = np.max(valid_data) - np.min(valid_data)
@@ -485,8 +485,8 @@ class WaferMapping:
         ax2.set_ylim(-self.wafer_radius - margin, self.wafer_radius + margin)
         
         # 통계 정보 계산 및 추가
-        side1_data = result['zq_side1'][~np.isnan(result['zq_side1'])]
-        side2_data = result['zq_side2'][~np.isnan(result['zq_side2'])]
+        side1_data = result['Z']  # 실제 25개 측정값
+        side2_data = result['Z1'] # 실제 25개 측정값
         
         # Side1 통계 정보
         if len(side1_data) > 0:
