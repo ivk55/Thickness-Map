@@ -133,7 +133,7 @@ class WaferMapping:
             nozzle_num = 32 + i  # 32부터 1까지
             
             # 각도 계산 (12시부터 반시계방향)
-            angle = 90 - (i * 360 / 32)  # 90도부터 시작해서 반시계방향
+            angle = 90 + (i * 360 / 32)  # 90도부터 시작해서 반시계방향
             angle_rad = np.deg2rad(angle)
             
             x = radius * np.cos(angle_rad)
