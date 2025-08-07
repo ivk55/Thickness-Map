@@ -26,6 +26,7 @@ class EquipmentConfig:
                 'fixed_angle': 0,
                 'supports_thk': True,
                 'max_thk_count': 24,
+                'supports_nozzle': True,  # 노즐 맵 지원
                 'units': ['TAHP307', 'TAHP701', 'TAHP702', 'TAHP703', 'TAHP851', 'TAHP852', 
                          'TAHP853', 'TAHP854', 'TAHP855', 'TAHP856', 'TAHP857', 'TAJP7U1', 
                          'TAJP7U2', 'TAJP7U3']
@@ -51,6 +52,7 @@ class EquipmentConfig:
                 },
                 'supports_thk': False,
                 'side_names': {'side1': 'Side1', 'side2': 'Side2'},
+                'supports_exclude_point20': True,  # 20번 포인트 제외 옵션 지원
                 'units': ['TATP871', 'TATP872', 'TATP873', 'TATP874']
             },
             'MIR3000': {
@@ -85,13 +87,11 @@ class EquipmentConfig:
             'LP3': {'side1': 180, 'side2': 156}
         }
         
-        
         # TEAP360 특별 처리 (TES에 속하지만 THK 지원)
         self.teap360_special_units = ['TEAP360']
     
     def is_new_efem(self, unit):
         return unit in self.new_efem_units
-    
     
     def is_teap360_special(self, unit):
         return unit in self.teap360_special_units
@@ -115,11 +115,35 @@ class WaferMapping:
         ])
         
         self.wafer_radius = 150
+        self.nozzle_radius = 200  # 노즐 반지름
         self.grid_resolution = 1
         self.interpolation_method = 'cubic'
         self.colormap = 'jet'
+        
+        # 노즐 좌표 생성 (PHDP용) - 다른 변수들 정의 후에 호출
+        self.nozzle_coordinates = self.create_nozzle_coordinates()
 
-    def create_wafer_map(self, side1_angle, side2_angle, side1_data, side2_data):
+    def create_nozzle_coordinates(self):
+        """32개 노즐 좌표 생성 (12시 32번부터 반시계방향)"""
+        nozzle_coords = []
+        radius = self.nozzle_radius
+        
+        # 12시(90도)부터 시작해서 반시계방향으로 32, 31, 30, ..., 1
+        for i in range(32):
+            nozzle_num = 32 - i  # 32부터 1까지
+            
+            # 각도 계산 (12시부터 반시계방향)
+            angle = 90 - (i * 360 / 32)  # 90도부터 시작해서 반시계방향
+            angle_rad = np.deg2rad(angle)
+            
+            x = radius * np.cos(angle_rad)
+            y = radius * np.sin(angle_rad)
+            
+            nozzle_coords.append([nozzle_num, x, y])
+            
+        return np.array(nozzle_coords)
+
+    def create_wafer_map(self, side1_angle, side2_angle, side1_data, side2_data, exclude_point20=False):
         n_points = len(self.coordinates)
         data = np.zeros((n_points, 5))
         data[:, 0:3] = self.coordinates
@@ -177,10 +201,11 @@ class WaferMapping:
             'xq': xq, 'yq': yq,
             'zq_side1': zq_side1, 'zq_side2': zq_side2,
             'side1_angle': side1_angle, 'side2_angle': side2_angle,
-            'Z': Z, 'Z1': Z1
+            'Z': Z, 'Z1': Z1,
+            'exclude_point20': exclude_point20
         }
 
-    def create_thk_map(self, thk_datasets, angle=0):
+    def create_thk_map(self, thk_datasets, angle=0, show_nozzle=False):
         n_points = len(self.coordinates)
         X = self.coordinates[:, 1]
         Y = self.coordinates[:, 2]
@@ -210,7 +235,8 @@ class WaferMapping:
             'xq': xq, 'yq': yq,
             'angle': angle,
             'thk_maps': [],
-            'thk_data': thk_datasets
+            'thk_data': thk_datasets,
+            'show_nozzle': show_nozzle
         }
 
         # 각 THK 데이터셋에 대해 보간 수행
@@ -260,6 +286,12 @@ class WaferMapping:
         circle_x = self.wafer_radius * np.cos(theta)
         circle_y = self.wafer_radius * np.sin(theta)
         
+        # 노즐 좌표 (PHDP용)
+        if result.get('show_nozzle', False):
+            nozzle_x = self.nozzle_coordinates[:, 1]
+            nozzle_y = self.nozzle_coordinates[:, 2]
+            nozzle_nums = self.nozzle_coordinates[:, 0].astype(int)
+        
         for idx, dataset_idx in enumerate(selected_datasets):
             row = idx // cols + 1
             col = idx % cols + 1
@@ -306,11 +338,30 @@ class WaferMapping:
                 ),
                 row=row, col=col
             )
+            
+            # 노즐 포인트 추가 (PHDP용)
+            if result.get('show_nozzle', False):
+                fig.add_trace(
+                    go.Scatter(
+                        x=nozzle_x,
+                        y=nozzle_y,
+                        mode='markers+text',
+                        marker=dict(color='blue', size=10, symbol='square'),
+                        text=[str(num) for num in nozzle_nums],
+                        textposition="top center",
+                        textfont=dict(color='yellow', size=10),
+                        name="Nozzles",
+                        showlegend=False
+                    ),
+                    row=row, col=col
+                )
         
         # 레이아웃 설정
-        margin = self.wafer_radius * 0.2
+        margin = (self.nozzle_radius if result.get('show_nozzle', False) else self.wafer_radius) * 0.2
+        plot_radius = self.nozzle_radius if result.get('show_nozzle', False) else self.wafer_radius
+        
         fig.update_layout(
-            title=f"THK Data Mapping Results (Angle: {result['angle']}°)",
+            title=f"THK Data Mapping Results (Angle: {result['angle']}°)" + (" - with Nozzle Map" if result.get('show_nozzle', False) else ""),
             height=400 * rows,
             showlegend=False
         )
@@ -318,14 +369,14 @@ class WaferMapping:
         # 축 설정
         fig.update_xaxes(
             title_text="X (mm)",
-            range=[-self.wafer_radius - margin, self.wafer_radius + margin],
+            range=[-plot_radius - margin, plot_radius + margin],
             scaleanchor="y",
             scaleratio=1
         )
         
         fig.update_yaxes(
             title_text="Y (mm)",
-            range=[-self.wafer_radius - margin, self.wafer_radius + margin],
+            range=[-plot_radius - margin, plot_radius + margin],
             scaleanchor="x",
             scaleratio=1
         )
@@ -386,16 +437,40 @@ class WaferMapping:
             circle = Circle((0, 0), self.wafer_radius, fill=False, edgecolor='black', linewidth=2)
             ax.add_patch(circle)
             
-            ax.set_title(f'THK Data {dataset_idx+1}', fontsize=14, weight='bold')
+            # 노즐 포인트 표시 (PHDP용)
+            if result.get('show_nozzle', False):
+                nozzle_x = self.nozzle_coordinates[:, 1]
+                nozzle_y = self.nozzle_coordinates[:, 2]
+                nozzle_nums = self.nozzle_coordinates[:, 0].astype(int)
+                
+                ax.scatter(nozzle_x, nozzle_y, c='blue', s=50, marker='s', zorder=5)
+                
+                # 노즐 번호 표시 (방향에 따라 바깥쪽으로)
+                for x, y, num in zip(nozzle_x, nozzle_y, nozzle_nums):
+                    # 웨이퍼 중심에서 노즐 방향으로의 단위벡터 계산
+                    length = np.sqrt(x*x + y*y)
+                    if length > 0:
+                        # 바깥쪽으로 20mm 더 이동
+                        text_x = x + (x/length) * 20
+                        text_y = y + (y/length) * 20
+                    else:
+                        text_x = x
+                        text_y = y + 20
+                    
+                    ax.text(text_x, text_y, str(num), ha='center', va='center', 
+                           fontsize=10, color='black', weight='bold')
+            
+            ax.set_title(f'THK Data {dataset_idx+1}' + (" - Nozzle Map" if result.get('show_nozzle', False) else ""), fontsize=14, weight='bold')
             ax.set_xlabel('X (mm)', fontsize=12)
             ax.set_ylabel('Y (mm)', fontsize=12)
             ax.set_aspect('equal')
             ax.grid(True, alpha=0.3)
             
-            # 축 범위 설정
-            margin = self.wafer_radius * 0.2
-            ax.set_xlim(-self.wafer_radius - margin, self.wafer_radius + margin)
-            ax.set_ylim(-self.wafer_radius - margin, self.wafer_radius + margin)
+            # 축 범위 설정 (노즐 맵인 경우 더 넓게)
+            plot_radius = self.nozzle_radius if result.get('show_nozzle', False) else self.wafer_radius
+            margin = plot_radius * 0.2
+            ax.set_xlim(-plot_radius - margin, plot_radius + margin)
+            ax.set_ylim(-plot_radius - margin, plot_radius + margin)
             
             # 통계 정보 추가
             valid_data = result['thk_data'][dataset_idx]  # 실제 25개 THK 측정값
@@ -415,13 +490,16 @@ class WaferMapping:
         for i in range(n_plots, len(axes)):
             axes[i].set_visible(False)
         
-        plt.suptitle(f'THK Mapping Results', fontsize=16, weight='bold')
+        plt.suptitle(f'THK Mapping Results' + (" - with Nozzle Map" if result.get('show_nozzle', False) else ""), fontsize=16, weight='bold')
         plt.tight_layout()
         
         return fig
 
     def plot_wafer_map(self, result, side_names=None):
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
+        
+        # 20번 포인트 제외 옵션이 적용된 경우의 데이터
+        exclude_point20 = result.get('exclude_point20', False)
         
         # Side1 플롯
         im1 = ax1.pcolormesh(result['xq'], result['yq'], result['zq_side1'], 
@@ -484,18 +562,25 @@ class WaferMapping:
         ax2.set_xlim(-self.wafer_radius - margin, self.wafer_radius + margin)
         ax2.set_ylim(-self.wafer_radius - margin, self.wafer_radius + margin)
         
-        # 통계 정보 계산 및 추가
+        # 통계 정보 계산 및 추가 (20번 포인트 제외 옵션 적용)
         side1_data = result['Z']  # 실제 25개 측정값
         side2_data = result['Z1'] # 실제 25개 측정값
         
+        # 20번 포인트 제외 시 통계 계산용 데이터 필터링
+        if exclude_point20:
+            # 20번 포인트 (인덱스 19) 제외
+            side1_stats_data = np.concatenate([side1_data[:19], side1_data[20:]])
+            side2_stats_data = np.concatenate([side2_data[:19], side2_data[20:]])
+        else:
+            side1_stats_data = side1_data
+            side2_stats_data = side2_data
+        
         # Side1 통계 정보
-        if len(side1_data) > 0:
-            side1_avg = np.mean(side1_data)
-            side1_rng = np.max(side1_data) - np.min(side1_data)
-            side1_std = np.std(side1_data, ddof=1)
-            side1_var = np.var(side1_data, ddof=1)
-            side1_min = np.min(side1_data)
-            side1_max = np.max(side1_data)
+        if len(side1_stats_data) > 0:
+            side1_avg = np.mean(side1_stats_data)
+            side1_rng = np.max(side1_stats_data) - np.min(side1_stats_data)
+            side1_std = np.std(side1_stats_data, ddof=1)
+            side1_var = np.var(side1_stats_data, ddof=1)
             
             stats_text1 = f"AVG = {side1_avg:.1f}nm\nRNG = {side1_rng:.1f}nm\nSTD = {side1_std:.1f}nm\nVAR = {side1_var:.1f}nm²"
             
@@ -504,13 +589,11 @@ class WaferMapping:
                     bbox=dict(boxstyle="round,pad=0.3", facecolor='white', alpha=0.8))
         
         # Side2 통계 정보
-        if len(side2_data) > 0:
-            side2_avg = np.mean(side2_data)
-            side2_rng = np.max(side2_data) - np.min(side2_data)
-            side2_std = np.std(side2_data, ddof=1)
-            side2_var = np.var(side2_data, ddof=1)
-            side2_min = np.min(side2_data)
-            side2_max = np.max(side2_data)
+        if len(side2_stats_data) > 0:
+            side2_avg = np.mean(side2_stats_data)
+            side2_rng = np.max(side2_stats_data) - np.min(side2_stats_data)
+            side2_std = np.std(side2_stats_data, ddof=1)
+            side2_var = np.var(side2_stats_data, ddof=1)
             
             stats_text2 = f"AVG = {side2_avg:.1f}nm\nRNG = {side2_rng:.1f}nm\nSTD = {side2_std:.1f}nm\nVAR = {side2_var:.1f}nm²"
             
@@ -527,6 +610,9 @@ class WaferMapping:
         # 서브플롯 생성
         if side_names is None:
             side_names = {'side1': 'Side1', 'side2': 'Side2'}
+            
+        exclude_point20 = result.get('exclude_point20', False)
+        
         fig = make_subplots(
             rows=1, cols=2,
             subplot_titles=[
@@ -650,52 +736,6 @@ class WaferMapping:
             scaleratio=1
         )
         
-        # 통계 정보 계산 및 추가
-        side1_data = result['zq_side1'][~np.isnan(result['zq_side1'])]
-        side2_data = result['zq_side2'][~np.isnan(result['zq_side2'])]
-        
-        # Side1 통계 정보
-        if len(side1_data) > 0:
-            side1_avg = np.mean(side1_data)
-            side1_rng = np.max(side1_data) - np.min(side1_data)
-            side1_std = np.std(side1_data, ddof=1)
-            side1_var = np.var(side1_data, ddof=1)
-            
-            stats_text1 = f"AVG = {side1_avg:.1f}nm<br>RNG = {side1_rng:.1f}nm<br>STD = {side1_std:.1f}nm<br>VAR = {side1_var:.1f}nm²"
-            
-            fig.add_annotation(
-                x=0.15, y=0.95,
-                xref="paper", yref="paper",
-                text=stats_text1,
-                showarrow=False,
-                font=dict(size=12, color="white"),
-                bgcolor="rgba(0,0,0,0.7)",
-                bordercolor="white",
-                borderwidth=1,
-                borderpad=4
-            )
-        
-        # Side2 통계 정보
-        if len(side2_data) > 0:
-            side2_avg = np.mean(side2_data)
-            side2_rng = np.max(side2_data) - np.min(side2_data)
-            side2_std = np.std(side2_data, ddof=1)
-            side2_var = np.var(side2_data, ddof=1)
-            
-            stats_text2 = f"AVG = {side2_avg:.1f}nm<br>RNG = {side2_rng:.1f}nm<br>STD = {side2_std:.1f}nm<br>VAR = {side2_var:.1f}nm²"
-            
-            fig.add_annotation(
-                x=0.85, y=0.95,
-                xref="paper", yref="paper",
-                text=stats_text2,
-                showarrow=False,
-                font=dict(size=12, color="white"),
-                bgcolor="rgba(0,0,0,0.7)",
-                bordercolor="white",
-                borderwidth=1,
-                borderpad=4
-            )
-        
         return fig
 
 class HistoryManager:
@@ -780,6 +820,22 @@ def main():
         eq_info['units'],
         help=f"{equipment_type} 설비의 호기를 선택하세요"
     )
+    
+    # PHDP용 노즐 맵 옵션
+    show_nozzle_map = False
+    if equipment_type == 'PHDP' and eq_info.get('supports_nozzle', False):
+        show_nozzle_map = st.sidebar.checkbox(
+            "N/Z Tune Map 표시",
+            help="32개 노즐 포인트를 함께 표시합니다"
+        )
+    
+    # TEOS용 20번 포인트 제외 옵션
+    exclude_point20 = False
+    if equipment_type == 'TEOS' and eq_info.get('supports_exclude_point20', False):
+        exclude_point20 = st.sidebar.checkbox(
+            "20번 포인트 제외 (Range 계산)",
+            help="통계 계산에서 20번 포인트를 제외합니다"
+        )
     
     # 이력 섹션
     st.sidebar.markdown("---")
@@ -1038,7 +1094,7 @@ def main():
         
         # THK 데이터 시각화
         if (eq_info.get('supports_thk', False) or eq_config.is_teap360_special(unit)) and 'thk_datasets' in locals() and len(thk_datasets) > 0:
-            result = wm.create_thk_map(thk_datasets, angle=side1_angle)
+            result = wm.create_thk_map(thk_datasets, angle=side1_angle, show_nozzle=show_nozzle_map)
             
             # 표시할 데이터셋 선택
             if len(thk_datasets) > 1:
@@ -1103,7 +1159,7 @@ def main():
         
         # Side1/Side2 데이터 시각화
         elif not eq_info.get('supports_thk', False) and 'side1_data' in locals() and side1_data is not None and side2_data is not None:
-            result = wm.create_wafer_map(side1_angle, side2_angle, side1_data, side2_data)
+            result = wm.create_wafer_map(side1_angle, side2_angle, side1_data, side2_data, exclude_point20)
             
             # 시각화 옵션
             viz_option = st.radio(
@@ -1118,27 +1174,38 @@ def main():
                 st.pyplot(fig)
                 
                 filename = f"wafer_map_{equipment_type}_{unit}_S1_{result['side1_angle']}_S2_{result['side2_angle']}.png"
+                if exclude_point20:
+                    filename = filename.replace('.png', '_ex20.png')
                 download_link = get_image_download_link(fig, filename)
                 st.markdown(download_link, unsafe_allow_html=True)
             else:
                 fig_plotly = wm.plot_wafer_map_plotly(result, side_names)
                 st.plotly_chart(fig_plotly, use_container_width=True)
             
-            # 통계 정보
+            # 통계 정보 (20번 포인트 제외 옵션 적용)
             st.subheader("통계 정보")
+                
+            side1_stats_data = result['Z']
+            side2_stats_data = result['Z1']
+            
+            # 20번 포인트 제외 시 통계용 데이터 필터링
+            if exclude_point20:
+                side1_stats_data = np.concatenate([side1_stats_data[:19], side1_stats_data[20:]])
+                side2_stats_data = np.concatenate([side2_stats_data[:19], side2_stats_data[20:]])
+            
             col_stat1, col_stat2 = st.columns(2)
             
             with col_stat1:
                 st.markdown(f"**{side_names['side1']}**")
-                st.metric("평균", f"{np.nanmean(result['zq_side1']):.2f} nm")
-                st.metric("표준편차", f"{np.nanstd(result['zq_side1']):.2f} nm")
-                st.metric("범위", f"{np.nanmin(result['zq_side1']):.1f} ~ {np.nanmax(result['zq_side1']):.1f} nm")
+                st.metric("평균", f"{np.mean(side1_stats_data):.2f} nm")
+                st.metric("표준편차", f"{np.std(side1_stats_data, ddof=1):.2f} nm")
+                st.metric("범위", f"{np.min(side1_stats_data):.1f} ~ {np.max(side1_stats_data):.1f} nm")
             
             with col_stat2:
                 st.markdown(f"**{side_names['side2']}**")
-                st.metric("평균", f"{np.nanmean(result['zq_side2']):.2f} nm")
-                st.metric("표준편차", f"{np.nanstd(result['zq_side2']):.2f} nm")
-                st.metric("범위", f"{np.nanmin(result['zq_side2']):.1f} ~ {np.nanmax(result['zq_side2']):.1f} nm")
+                st.metric("평균", f"{np.mean(side2_stats_data):.2f} nm")
+                st.metric("표준편차", f"{np.std(side2_stats_data, ddof=1):.2f} nm")
+                st.metric("범위", f"{np.min(side2_stats_data):.1f} ~ {np.max(side2_stats_data):.1f} nm")
             
             # 이력 저장
             history.add_entry(
@@ -1154,7 +1221,13 @@ def main():
     
     # 푸터
     st.markdown("---")
-    st.markdown(f"**웨이퍼 매핑 도구** | {equipment_type} {unit} 분석")
+    additional_info = ""
+    if equipment_type == 'PHDP' and show_nozzle_map:
+        additional_info += " | N/Z Tune Map"
+    if equipment_type == 'TEOS' and exclude_point20:
+        additional_info += " | 20pt 제외"
+    
+    st.markdown(f"**웨이퍼 매핑 도구** | {equipment_type} {unit} 분석{additional_info}")
 
 if __name__ == "__main__":
     main()
