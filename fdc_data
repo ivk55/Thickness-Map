@@ -1,0 +1,104 @@
+#!/usr/bin/env python  
+# -*- coding: utf-8 -*-
+
+import pandas as pd  
+import bigdataquery as bdq  
+from typing import List, Tuple, Optional
+
+
+def fetch_fdc_data() -> Tuple[pd.DataFrame, Optional[pd.Timestamp]]:  
+    """  
+    fab_m.fdc_sum_data_agg 테이블에서 아래 고정 조건으로 데이터를 조회한다.  
+    - 라인 : PFBP, PFPB  
+    - 장비 패턴 : TAHP85*, TAHP7U*  
+    - 지역 : CVD  
+    - 파라미터명 : ESC_Current_AVG_T  
+    - 최근 180일(≈6개월) 데이터  
+    반환값: (DataFrame, 최신 create_time)  
+    """
+
+    # -------------------------------------------------  
+    # 1️⃣ AD 로그인 (토큰이 없거나 만료된 경우)  
+    # -------------------------------------------------  
+    try:  
+        bdq.getData("SELECT 1")  
+    except Exception:                     # 토큰이 없거나 만료되면 로그인  
+        print("[INFO] AD 로그인 필요 → 터미널에 아이디·비밀번호 입력")  
+        bdq.login()
+
+    # -------------------------------------------------  
+    # 2️⃣ WHERE 절 구성 (고정 값)  
+    # -------------------------------------------------  
+    where_clauses: List[str] = [  
+        "line_id IN ('PFBP','PFPB')",  
+        "(eqp_id LIKE 'TAHP85\\%' OR eqp_id LIKE 'TAHP7U\\%')",  
+        "lottype <> '-'",  
+        "area = 'CVD'",  
+        "create_time >= now() - INTERVAL 180 DAY"  
+    ]
+
+    # -------------------------------------------------  
+    # 3️⃣ 최종 SQL (서브쿼리 + 외부 필터)  
+    # -------------------------------------------------  
+    sql = f"""  
+    SELECT *  
+    FROM (  
+        SELECT  
+            line_id,  
+            line_no,  
+            eqp_index,  
+            eqp_id,  
+            area,  
+            eqp_model,  
+            eqp_type,  
+            ees_type,  
+            unit_name,  
+            disp_name,  
+            proc_module_type,  
+            unnest(act_time)          AS act_time,  
+            step_seq,  
+            processid,  
+            partid,  
+            ppid,  
+            fdc_bin,  
+            lottype,  
+            create_time,  
+            fdc_bin_prop,  
+            unnest(param_name)        AS param_name,  
+            unnest(ch_step)           AS ch_step,  
+            unnest(param_value)       AS param_value,  
+            unnest(upper_spec)        AS upper_spec,  
+            unnest(lower_spec)        AS lower_spec,  
+            unnest(priority)          AS priority  
+        FROM fab.m_erdtsum_data_agg AS t  
+        WHERE {" AND ".join(where_clauses)}  
+    ) sub  
+    WHERE sub.param_name = 'ESC_Current_AVG_T'  
+    """
+
+    # -------------------------------------------------  
+    # 4️⃣ 실행 & DataFrame 변환  
+    # -------------------------------------------------  
+    result = bdq.getData(sql)
+
+    # bdq.getData 가 DataFrame을 반환하지 않을 경우 대비  
+    if not isinstance(result, pd.DataFrame):  
+        result = pd.DataFrame(result)
+
+    # 최신 create_time (선택) 추출  
+    latest_time: Optional[pd.Timestamp] = None  
+    if not result.empty and "create_time" in result.columns:  
+        latest_time = pd.to_datetime(result["create_time"]).max()
+
+    return result, latest_time
+
+
+# ----------------------------------------------------------------------  
+# 스크립트 직접 실행 시  
+# ----------------------------------------------------------------------  
+if __name__ == "__main__":  
+    df, latest = fetch_fdc_data()  
+    print("\n=== 조회된 데이터 (상위 5행) ===")  
+    print(df.head())  
+    print("\n=== 최신 create_time ===")  
+    print(latest if latest is not None else "데이터가 없거나 create_time 컬럼이 없음")  
