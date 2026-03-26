@@ -1,0 +1,588 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+THK Backup – 실시간(딜레이 0 h) 데이터를 DB에서 가져와 Excel에 저장
+추가 기능
+  • 콘솔에 “NPW_DACUHDP8KLP (NPW ID) THK 첫장 (SLOT ID : xxx) - 25개 THK 입력”
+    와 같은 형태로 각 웨이퍼·슬롯 정보를 출력
+  • HBMHDP8K, GOF, RI 등 모든 조합에 적용
+"""
+
+import sys
+import traceback
+import re
+from pathlib import Path
+from typing import List, Optional, Dict, Tuple
+from datetime import datetime
+import pandas as pd
+import xlwings as xw
+import bigdataquery as bdq   # AD 로그인 필요
+from tqdm import tqdm
+
+# ----------------------------------------------------------------------
+# ① 파일·폴더 경로
+# ----------------------------------------------------------------------
+EXCEL_SRC = Path.home() / "Desktop" / "PHDP_DRAM_BU_SHEET.xlsx"
+EXCEL_DST = Path.home() / "Desktop" / "백업완료.xlsx"
+
+# ----------------------------------------------------------------------
+# ② 사용자 UI (장비·챔버·컨테이너·FOUP·SLOT)
+# ----------------------------------------------------------------------
+def _to_upper_list(inp: str, allowed: List[str]) -> List[str]:
+    """쉼표‑구분 문자열을 대문자로 정규화하고 허용값만 남김"""
+    if not inp:
+        return []
+    return [x.upper() for x in inp.split(",") if x.strip().upper() in allowed]
+
+def select_equipment_and_chamber() -> Tuple[
+        List[str], List[str], List[str], List[int]]:
+    """
+    콘솔 UI 로 장비, 챔버, 컨테이너(FOUP), SLOT 번호를 선택한다.
+    반환값 : (equipment, chambers, containers, slot_numbers)
+    """
+    available_equipment = [
+        "TAHP851", "TAHP852", "TAHP853",
+        "TAHP854", "TAHP855", "TAHP856", "TAHP857"
+    ]
+    available_chambers = ["A", "B", "D"]
+
+    print("=" * 50)
+    print("🏭 THK Backup – 실시간(딜레이 없음) 설정")
+    print("=" * 50)
+
+    # ── 장비 선택 ───────────────────────────────────────
+    print(f"\n📋 사용 가능한 장비: {', '.join(available_equipment)}")
+    equipment_input = input(
+        "🔧 사용할 장비를 입력 (쉼표 구분, 예: TAHP857 혹은 TAHP856,TAHP857): "
+    ).strip()
+    selected_eqp = _to_upper_list(equipment_input, available_equipment)
+    if not selected_eqp:
+        selected_eqp = ["TAHP857"]
+    print(f"   → 선택된 장비: {selected_eqp}")
+
+    # ── 챔버 선택 ───────────────────────────────────────
+    print(f"\n🏠 사용 가능한 챔버: {', '.join(available_chambers)}")
+    chamber_input = input(
+        "🔧 사용할 챔버를 입력 (쉼표 구분, 예: A 혹은 A,B): "
+    ).strip()
+    selected_ch = _to_upper_list(chamber_input, available_chambers)
+    if not selected_ch:
+        selected_ch = ["A"]
+    print(f"   → 선택된 챔버: {selected_ch}")
+
+    # ── 컨테이너(FOUP) 선택 (옵션) ───────────────────────────────
+    container_input = input(
+        "\n🔧(선택) 컨테이너 ID(FOUP) 를 쉼표 구분 입력 (예: C001,C002) → 입력 없으면 전체 조회: "
+    ).strip()
+    selected_cont = [c.strip() for c in container_input.split(",")] if container_input else []
+    print(f"   → 선택된 컨테이너(FOUP): {selected_cont if selected_cont else '전체'}")
+
+    # ── SLOT 번호 선택 (옵션) ───────────────────────────────────
+    slot_input = input(
+        "\n🔧(선택) SLOT 번호를 쉼표 구분 입력 (예: 1,2,3) → 입력 없으면 전체 조회: "
+    ).strip()
+    if slot_input:
+        selected_slots = [
+            int(s) for s in slot_input.split(",") if s.strip().isdigit()
+        ]
+    else:
+        selected_slots = []   # 전체 조회
+    print(f"   → 선택된 SLOT 번호: {selected_slots if selected_slots else '전체'}")
+    print("\n" + "=" * 50)
+
+    return selected_eqp, selected_ch, selected_cont, selected_slots
+
+# ----------------------------------------------------------------------
+# ③ DB 조회 (실시간 조인, 딜레이 없음)
+# ----------------------------------------------------------------------
+def fetch_raw_data(
+    days: int = 7,
+    equipment_ids: List[str] | None = None,
+    chamber_ids: List[str] | None = None,
+    container_ids: List[str] | None = None,
+    slot_numbers: List[int] | None = None,
+) -> Tuple[pd.DataFrame, Optional[pd.Timestamp]]:
+    """
+    최근 `days` 일간 데이터를 실시간 조인 쿼리로 가져온다.
+    반환값 : (DataFrame, latest_tkin_time)
+    """
+    # 1️⃣ AD 로그인
+    try:
+        bdq.getData("SELECT 1")
+    except Exception:
+        print("▶ AD 로그인 필요 → 터미널에 계정·비밀번호 입력")
+        bdq.login()
+
+    # 2️⃣ 기본값 설정
+    if equipment_ids is None:
+        equipment_ids = ["TAHP857"]
+    if chamber_ids is None:
+        chamber_ids = ["A"]
+    if container_ids is None:
+        container_ids = []          # 전체 조회
+    if slot_numbers is None:
+        slot_numbers = []          # 전체 조회
+
+    # 3️⃣ IN‑절 문자열 (이미 검증된 리스트이므로 안전)
+    equip_str = "','".join(equipment_ids)
+    chamber_str = "','".join(chamber_ids)
+    container_str = "','".join(container_ids)
+
+    # 4️⃣ 시간 구간 정의 (딜레이 없음)
+    start_expr = f"DATE_SUB(NOW(), INTERVAL {days} DAY)"
+    end_expr = "NOW()"
+
+    # 5️⃣ SLOT 필터 (옵션)
+    slot_filter = ""
+    if slot_numbers:
+        slot_list = ",".join(map(str, slot_numbers))
+        slot_filter = f"AND A.prc_slot_id IN ({slot_list})"
+
+    # 6️⃣ 실시간 조인 쿼리 – tkin_time 포함
+    query = f"""
+    SELECT
+        A.prc_tkin_time,
+        A.step_seq,
+        A.eqp_id,
+        A.tkin_time,                     -- 원본 tkin_time
+        A.tkin_time          AS metro_tkin_time,
+        A.container_id,
+        A.prc_eqp_id,
+        A.chamber_ids,
+        A.prc_ppid,
+        A.shelf_id,
+        A.npw_wafer_id,
+        A.prc_slot_id,                   -- SLOT 번호 (있을 경우)
+        CONCAT(A.container_id, '_', A.shelf_id) AS npw,
+        B.item_id,
+        B.subitem_id,
+        B.value
+    FROM
+    ( SELECT
+        npw_wafer_id,
+        step_seq,
+        eqp_id,
+        tkin_time,
+        container_id,
+        prc_eqp_id,
+        prc_ppid,
+        shelf_id,
+        prc_tkin_time,
+        dcol_time,
+        chamber_id_list AS chamber_ids,
+        prc_slot_id
+      FROM yms_me_main_rt.sor_trk_fab_met_npw
+      WHERE dcol_time BETWEEN {start_expr} AND {end_expr}
+        AND (line_id LIKE 'P%' OR line_id LIKE 'K%')
+        AND SUBSTR(line_id,3,1) <> 'R'
+        AND prc_tkin_time BETWEEN {start_expr} AND {end_expr}
+        AND prc_eqp_id IN ('{equip_str}')
+        AND chamber_id_list IN ('{chamber_str}')
+        {"AND container_id IN ('" + container_str + "')" if container_str else ""}
+        {slot_filter}
+        AND shelf_id IS NOT NULL
+    ) A
+    LEFT JOIN
+    ( SELECT
+        npw_wafer_id,
+        step_seq,
+        item_id,
+        sub_item_id   AS subitem_id,
+        item_value    AS value,
+        dcol_time
+      FROM yms_me_main_rt.sor_trk_fab_met_npw_msr
+      WHERE dcol_time BETWEEN {start_expr} AND {end_expr}
+        AND ( SUBSTR(item_id,1,2) IN ('TH','RI','RK','GO','B1','P1')
+              OR item_id IN ('WARPCF_X','BOW1_1') )
+        AND SUBSTR(sub_item_id,1,1) IN ('S','A','R')
+        AND sub_item_id NOT IN ('STD','SLOTID','SKEW')
+    ) B
+      ON A.npw_wafer_id = B.npw_wafer_id
+     AND A.dcol_time    = B.dcol_time
+    WHERE B.item_id IS NOT NULL;
+    """
+
+    print("\n▶ 데이터 조회 중…")
+    df = bdq.getData(query)                      # pandas DataFrame 반환
+    print(f"✅ 조회완료 : {len(df)} rows, {len(df.columns)} columns")
+
+    # 7️⃣ Timestamp 컬럼을 UTC datetime 로 변환
+    for col in ("prc_tkin_time", "dcol_time"):
+        if col in df.columns:
+            df[col] = pd.to_datetime(df[col], errors="coerce")
+            if df[col].dt.tz is None:
+                df[col] = df[col].dt.tz_localize("UTC")
+
+    # 8️⃣ 조회 시점(UTC) 추가
+    fetch_ts = datetime.utcnow().replace(tzinfo=pd.Timestamp.utcnow().tz)
+    df["fetch_timestamp"] = fetch_ts
+
+    # 9️⃣ 최신 tkin_time(UTC) 확보
+    latest_tkin_time: Optional[pd.Timestamp] = None
+    if "tkin_time" in df.columns:
+        df["tkin_time"] = pd.to_datetime(df["tkin_time"], errors="coerce")
+        if df["tkin_time"].dt.tz is None:
+            df["tkin_time"] = df["tkin_time"].dt.tz_localize("UTC")
+        latest_tkin_time = df["tkin_time"].max()
+
+    # 10️⃣ 콘솔에 선택 옵션 요약
+    print("\n--- 선택된 조회 옵션 요약 ---")
+    print(f"장비(equipment)          : {equipment_ids}")
+    print(f"챔버(chamber)           : {chamber_ids}")
+    print(f"FOUP(컨테이너)          : {container_ids if container_ids else '전체'}")
+    print(f"SLOT 번호               : {slot_numbers if slot_numbers else '전체'}")
+    print(f"조회 시점(fetch_timestamp) : {fetch_ts}")
+    print(f"최신 tkin_time               : {latest_tkin_time}")
+    print("-" * 40)
+
+    return df, latest_tkin_time
+
+# ----------------------------------------------------------------------
+# ④ 웨이퍼 ID 정렬용 헬퍼 – 끝에 있는 숫자(점 포함) 추출
+# ----------------------------------------------------------------------
+def _wafer_sort_key(wafer_id: str):
+    """
+    문자열에서 **끝에 있는 숫자(또는 소수점 포함)** 를 추출해
+    정수/실수 로 변환 후 정렬.
+    숫자를 찾지 못하면 문자열 자체를 반환해 사전식 정렬.
+    """
+    match = re.search(r"(\d+(?:\.\d+)?)\s*$", str(wafer_id))
+    if match:
+        num_str = match.group(1)
+        try:
+            return float(num_str) if "." in num_str else int(num_str)
+        except ValueError:
+            pass
+    return wafer_id
+
+# ----------------------------------------------------------------------
+# ⑤ 최신 웨이퍼 데이터 추출 (두 웨이퍼까지)
+# ----------------------------------------------------------------------
+def get_latest_wafer_data(
+    df: pd.DataFrame,
+    prc_ppid: str,
+    item_ids: List[str],
+    subitem_pattern: str,
+    expected_count: int,
+    step_seq_list: List[str],
+    strict: bool = True,
+) -> Tuple[List[List[Optional[float]]], List[str]]:
+    """
+    반환값 : (values_per_wafer, wafer_ids)
+    - `values_per_wafer` : 두 웨이퍼 각각에 대한 value 리스트
+    - `wafer_ids`        : 해당 웨이퍼를 구분할 ID (SLOT ID 혹은 npw_wafer_id)
+    """
+    # 1️⃣ 필터링 (공정·아이템·subitem·step_seq)
+    mask = (
+        (df["prc_ppid"] == prc_ppid)
+        & (df["item_id"].isin(item_ids))
+        & (df["subitem_id"].str.fullmatch(subitem_pattern))
+        & (df["step_seq"].isin(step_seq_list))
+    )
+    filtered = df.loc[mask].copy()
+    if filtered.empty:
+        print(
+            f"⚠️ {prc_ppid} {item_ids} (step_seq={step_seq_list}) 데이터가 없습니다."
+        )
+        return [[], []], []
+
+    print(
+        f"{prc_ppid} {item_ids} (step_seq={step_seq_list}): {len(filtered)} rows 발견"
+    )
+
+    # 2️⃣ 최신 prc_tkin_time 확보
+    latest_time = filtered["prc_tkin_time"].max()
+    latest = filtered[filtered["prc_tkin_time"] == latest_time].copy()
+    print(f"  최신 prc_tkin_time : {latest_time} ({len(latest)} rows)")
+
+    # 3️⃣ 웨이퍼 구분 컬럼 선택
+    if "prc_slot_id" in latest.columns:
+        slot_col = "prc_slot_id"
+    elif "npw_wafer_id" in latest.columns:
+        slot_col = "npw_wafer_id"
+        print("   → prc_slot_id 가 없으므로 npw_wafer_id 로 웨이퍼를 구분합니다.")
+    else:
+        print("⚠️ 웨이퍼를 구분할 컬럼이 없습니다 (prc_slot_id / npw_wafer_id).")
+        return [[], []], []
+
+    # 4️⃣ 정리 & 문자열 변환
+    if pd.api.types.is_categorical_dtype(latest[slot_col]):
+        latest[slot_col] = latest[slot_col].cat.remove_unused_categories()
+    latest[slot_col] = latest[slot_col].astype(str)
+
+    # 5️⃣ 그룹핑
+    slot_groups = latest.groupby(slot_col, observed=True)
+
+    # 6️⃣ 오름차순 정렬 (숫자 부분을 기준)
+    slot_ids = sorted(slot_groups.groups.keys(), key=_wafer_sort_key)
+    print(f"  slot_id (웨이퍼) 목록 (오름차순) : {slot_ids}")
+
+    result_wafers: List[List[Optional[float]]] = []
+    wafer_ids: List[str] = []
+
+    for i, slot_id in enumerate(slot_ids[:2]):          # 최대 2개 사용
+        wafer = slot_groups.get_group(slot_id).copy()
+        print(f"  웨이퍼 {i+1} (slot_id={slot_id}) : {len(wafer)} rows")
+        wafer_ids.append(slot_id)
+
+        if strict and len(wafer) != expected_count:
+            print(
+                f"  ⚠️ strict 모드: 기대 개수 {expected_count}와 다름 → {len(wafer)} rows"
+            )
+
+        # subitem_id 에서 숫자 추출 후 정렬
+        wafer["sub_num"] = wafer["subitem_id"].str.extract(r"S(\d+)").astype(int)
+        wafer = wafer.sort_values("sub_num")
+
+        # 순서대로 value 를 float 로 변환
+        values: List[Optional[float]] = []
+        for j in range(1, expected_count + 1):
+            row = wafer[wafer["sub_num"] == j]
+            if not row.empty:
+                raw_val = row["value"].iloc[0]
+                if pd.isna(raw_val) or raw_val in ("", "NULL"):
+                    values.append(None)
+                else:
+                    try:
+                        values.append(float(raw_val))
+                    except (ValueError, TypeError):
+                        values.append(None)
+            else:
+                values.append(None)
+
+        valid_cnt = sum(v is not None for v in values)
+        print(f"    유효값 {valid_cnt}/{expected_count} 개")
+        result_wafers.append(values)
+
+    # 두 번째 웨이퍼가 없을 경우 빈 리스트·빈 ID 추가 (형식 유지)
+    while len(result_wafers) < 2:
+        result_wafers.append([])
+        wafer_ids.append("")
+
+    return result_wafers, wafer_ids
+
+# ----------------------------------------------------------------------
+# ⑥ 콘솔에 웨이퍼 요약 출력 (요구된 형식)
+# ----------------------------------------------------------------------
+def print_wafer_summary(
+    npw_id: str,
+    item_label: str,
+    wafer_index: int,
+    slot_id: str,
+    expected_count: int,
+) -> None:
+    """
+    형식:
+    NPW_DACUHDP8KLP (NPW ID) THK 첫장 (SLOT ID : xxx) - 25개 THK 입력
+    """
+    order = ["첫장", "두번째장"]
+    order_str = order[wafer_index] if wafer_index < len(order) else f"{wafer_index+1}번째장"
+    print(
+        f"{npw_id} ({slot_id}) {item_label} {order_str} (SLOT ID : {slot_id}) - {expected_count}개 {item_label} 입력"
+    )
+
+# ----------------------------------------------------------------------
+# ⑦ Excel 에 쓰기 (셀 매핑 정의 + 조회 시점 기록)
+# ----------------------------------------------------------------------
+def write_to_excel(
+    all_data: Dict[str, Dict[str, List[List[Optional[float]]]]],
+    src: Path,
+    dst: Path,
+    fetch_timestamp: datetime,
+    tkin_timestamp: Optional[pd.Timestamp] = None,
+) -> None:
+    """전체 데이터를 미리 정의된 셀에 세로‑배열하고 dst 로 저장한다."""
+    if not src.is_file():
+        raise FileNotFoundError(f"원본 파일이 존재하지 않음: {src}")
+
+    cell_mapping = {
+        "NPW_DACUHDP8KLP": {
+            "THK": ["C89", "D89"],       # THK1_1_TOP (25개)
+            "GOF": ["E89", "F89"],       # GOF1_1 (25개)
+            "RI":  ["G89", None],        # RI1_1_L1 (13개)
+        },
+        "HBMHDP8K": {
+            "THK": ["H89", "I89"],       # THK1_1_TOP
+            "GOF": ["J89", "K89"],       # GOF1_1
+        },
+    }
+
+    app = xw.App(visible=False)   # 백그라운드 실행
+    try:
+        wb = app.books.open(str(src))
+        sht = wb.sheets[0]          # 첫 번째 시트 사용
+
+        # ---- 조회 시점 (fetch_timestamp) 기록 ----
+        sht.range("A1").value = f"Data fetched (UTC) : {fetch_timestamp}"
+        # ---- 최신 tkin_time 기록 (B1) ----
+        if tkin_timestamp is not None:
+            sht.range("B1").value = f"Latest tkin_time (UTC) : {tkin_timestamp}"
+        else:
+            sht.range("B1").value = "Latest tkin_time (UTC) : N/A"
+
+        # ---- 실제 결과값 쓰기 ----
+        for prc_ppid, items in all_data.items():
+            if prc_ppid not in cell_mapping:
+                continue
+            for item_type, wafer_lists in items.items():
+                if item_type not in cell_mapping[prc_ppid]:
+                    continue
+                cells = cell_mapping[prc_ppid][item_type]
+                for wafer_idx, (cell, values) in enumerate(zip(cells, wafer_lists)):
+                    if cell is None or not values:
+                        continue
+                    excel_vals = [v if v is not None else "" for v in values]
+                    sht.range(cell).options(transpose=True).value = excel_vals
+        wb.save(str(dst))
+    except Exception as e:
+        print(f"❌ 엑셀 쓰기 오류: {e}", file=sys.stderr)
+        raise
+    finally:
+        wb.close()
+        app.quit()
+
+# ----------------------------------------------------------------------
+# ⑧ 메인 실행 흐름
+# ----------------------------------------------------------------------
+def main() -> None:
+    """전체 프로세스 실행"""
+    DAYS = 7               # 조회 기간 (일)
+    STRICT = False         # 누락 허용 모드 (True → 25/13 개 모두 있어야 함)
+
+    try:
+        # 1️⃣ 장비·챔버·컨테이너·FOUP·SLOT 선택
+        selected_eqp, selected_ch, selected_cont, selected_slots = select_equipment_and_chamber()
+
+        # 2️⃣ DB 조회 (실시간 조인, 딜레이 없음) → 최신 tkin_time 반환
+        print("\n🔍 DB에서 데이터 조회 중...")
+        df, latest_tkin_time = fetch_raw_data(
+            days=DAYS,
+            equipment_ids=selected_eqp,
+            chamber_ids=selected_ch,
+            container_ids=selected_cont,
+            slot_numbers=selected_slots,
+        )
+        if df.empty:
+            print("❌ 조회된 데이터가 없습니다.")
+            return
+
+        # ------------------------------------------------------------------
+        # 3️⃣ 각 공정·아이템별 데이터 수집 + 콘솔 요약 출력
+        # ------------------------------------------------------------------
+        all_data: Dict[str, Dict[str, List[List[Optional[float]]]]] = {}
+
+        # ----- NPW_DACUHDP8KLP -----
+        print("\n=== NPW_DACUHDP8KLP 처리 중 ===")
+        npw: Dict[str, List[List[Optional[float]]]] = {}
+        # THK
+        thk_vals, thk_ids = get_latest_wafer_data(
+            df,
+            "NPW_DACUHDP8KLP",
+            ["THK1_1_TOP"],
+            r"S(2[0-5]|1[0-9]|[1-9])",
+            25,
+            ["SVC_PHDP_THK_20"],
+            STRICT,
+        )
+        npw["THK"] = thk_vals
+        for idx, slot in enumerate(thk_ids):
+            if slot:
+                print_wafer_summary(
+                    "NPW_DACUHDP8KLP", "THK", idx, slot, 25
+                )
+        # GOF
+        gof_vals, gof_ids = get_latest_wafer_data(
+            df,
+            "NPW_DACUHDP8KLP",
+            ["GOF1_1"],
+            r"S(2[0-5]|1[0-9]|[1-9])",
+            25,
+            ["SVC_PHDP_THK_20"],
+            STRICT,
+        )
+        npw["GOF"] = gof_vals
+        for idx, slot in enumerate(gof_ids):
+            if slot:
+                print_wafer_summary(
+                    "NPW_DACUHDP8KLP", "GOF", idx, slot, 25
+                )
+        # RI
+        ri_vals, ri_ids = get_latest_wafer_data(
+            df,
+            "NPW_DACUHDP8KLP",
+            ["RI1_1_L1"],
+            r"S(1[0-3]|[1-9])",
+            13,
+            ["SVC_PHDP_THK_30"],
+            STRICT,
+        )
+        npw["RI"] = ri_vals
+        for idx, slot in enumerate(ri_ids):
+            if slot:
+                print_wafer_summary(
+                    "NPW_DACUHDP8KLP", "RI", idx, slot, 13
+                )
+        all_data["NPW_DACUHDP8KLP"] = npw
+
+        # ----- HBMHDP8K -----
+        print("\n=== HBMHDP8K 처리 중 ===")
+        hbm: Dict[str, List[List[Optional[float]]]] = {}
+        # THK
+        hbm_thk_vals, hbm_thk_ids = get_latest_wafer_data(
+            df,
+            "HBMHDP8K",
+            ["THK1_1_TOP"],
+            r"S(2[0-5]|1[0-9]|[1-9])",
+            25,
+            ["SVC_PHDP_THK_20"],
+            STRICT,
+        )
+        hbm["THK"] = hbm_thk_vals
+        for idx, slot in enumerate(hbm_thk_ids):
+            if slot:
+                print_wafer_summary(
+                    "HBMHDP8K", "THK", idx, slot, 25
+                )
+        # GOF
+        hbm_gof_vals, hbm_gof_ids = get_latest_wafer_data(
+            df,
+            "HBMHDP8K",
+            ["GOF1_1"],
+            r"S(2[0-5]|1[0-9]|[1-9])",
+            25,
+            ["SVC_PHDP_THK_20"],
+            STRICT,
+        )
+        hbm["GOF"] = hbm_gof_vals
+        for idx, slot in enumerate(hbm_gof_ids):
+            if slot:
+                print_wafer_summary(
+                    "HBMHDP8K", "GOF", idx, slot, 25
+                )
+        all_data["HBMHDP8K"] = hbm
+
+        # ------------------------------------------------------------------
+        # 4️⃣ Excel 파일에 쓰기 (fetch_timestamp & tkin_timestamp 전달)
+        # ------------------------------------------------------------------
+        fetch_ts = df["fetch_timestamp"].iloc[0]   # 모든 행에 동일
+        print("\n=== Excel 파일에 데이터 쓰는 중 ===")
+        write_to_excel(
+            all_data,
+            EXCEL_SRC,
+            EXCEL_DST,
+            fetch_timestamp=fetch_ts,
+            tkin_timestamp=latest_tkin_time,
+        )
+
+        print("\n🎉 THK Backup 자동화 성공!")
+
+    except Exception as exc:
+        print(f"❌ 오류 발생: {exc}", file=sys.stderr)
+        traceback.print_exc()
+
+
+# ----------------------------------------------------------------------
+# 실행 진입점
+# ----------------------------------------------------------------------
+if __name__ == "__main__":
+    main()
