@@ -167,7 +167,7 @@ def fetch_fdc_data(
     )
     SELECT *
     FROM unnested
-    WHERE param_name IN ('ESC_Current_AVG_T')
+    WHERE param_name IN ({param_in})
       AND disp_name = '{chamber}'
     """
 
@@ -309,7 +309,7 @@ def plot_before_after(
         rows=n_steps, cols=1,
         subplot_titles=[f"Step: {s}" for s in steps],
         shared_xaxes=False,
-        ertical_spacing=vertical_spacing,   # ← **수정된 라인** 
+        vertical_spacing=vertical_spacing,   # ← **수정된 라인** 
     )
 
     before_colors = ["#1f77b4","#17becf","#aec7e8","#393b79","#5254a3","#6b6ecf"]
