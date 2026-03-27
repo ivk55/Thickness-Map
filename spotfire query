@@ -1,0 +1,24 @@
+select *
+
+from (
+	select line_id, line_no, eqp_index, eqp_id, area, eqp_model, eqp_type, ees_type, unit_name, disp_name, proc_module_type, unnest(act_time) as act_time,
+	step_seq, processid, partid, ppid, fdc_bin, lottype, create_time, fdc_bin_prop,
+	unnest(param_name) as param_name, unnest(ch_step) as ch_step, unnest(param_value) as param_value,
+	unnest(upper_spec) as upper_spec, unnest(lower_spec) as lower_spec, unnest(priority) as priority
+	
+	FROM fab.m_erdtsum_data_agg
+		
+	where 
+		1=1
+		and line_id in ('PFBP','PFPB')
+	and lottype not in ("-")
+	and area='CVD'
+	AND create_time >= current_timestamp() - INTERVAL 1 Month
+	) A
+
+WHERE   
+ ( A.eqp_id Like ('TAHP85%') )
+
+    AND A.disp_name IN ('A', 'B', 'C', 'D') 
+
+    AND A.param_name IN ('ESC_Current_AVG_T')
