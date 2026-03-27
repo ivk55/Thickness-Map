@@ -8,6 +8,8 @@ PHDP FDC 파트 교체 전/후 분석 v4
 4. add_vline x=change_date 직접 사용
 5. Before/After 통계 요약 출력 (평균, 표준편차, 변화율)
 6. 결과 HTML 저장
+
+
 """
 
 import xlwings as xw
@@ -320,6 +322,9 @@ def plot_before_after(
 
         for ci, (event_label, group) in enumerate(step_df.groupby("event_label")):
             change_date = group["change_date"].iloc[0]
+
+            vline_x = change_date.to_pydatetime()   # Timestamp → datetime  
+
             before = group[group["before_after"] == "Before"].sort_values("act_time")
             after  = group[group["before_after"] == "After"].sort_values("act_time")
 
@@ -349,10 +354,10 @@ def plot_before_after(
                     marker=dict(size=4, color=ac),
                     hovertemplate=f"<b>After</b><br>시간: %{{x}}<br>{param_name}: %{{y}}<extra>{event_label}</extra>",
                 ), row=row_idx, col=1)
-
+            
             # 교체 시점 세로선 (datetime 직접 사용)
             fig.add_vline(
-                x=change_date,
+                x=vline_x, 
                 line_dash="dot", line_color="red", line_width=1.5,
                 annotation_text="교체",
                 annotation_position="top right",
@@ -478,3 +483,7 @@ if __name__ == "__main__":
         )
 
     print("\n[완료] 분석 종료")
+
+
+
+
