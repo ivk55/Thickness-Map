@@ -1,0 +1,1348 @@
+"""
+PHDP FDC 파트 교체 전/후 분석 v2 완성본
+==========================================
+수정사항:
+- v1 문제: hovertemplate KeyError, add_vline TypeError, vert_spacing,
+           annotation yref, iloc, Timestamp 타입, UPPER(), xlwings,
+           format 따옴표, drop_duplicates 전부 반영
+- v2 문제: make_hover .get() KeyError, bubble size 타입, std NaN,
+           add_hline subplot, get_subplot_domains 활용, ch_step 색구분,
+           rangeslider subplot, heatmap pivot 방어, 통계패널 위치, spec line
+"""
+
+import xlwings as xw
+import pandas as pd
+import bigdataquery as bdq
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+from datetime import datetime
+import os
+
+# ============================================================
+# 설정
+# ============================================================
+
+EXCEL_PATH = r"C:\Users\bgyu1.lim\Desktop\새 폴더\변경점_Page.xlsx"
+OUTPUT_DIR = r"C:\Users\bgyu1.lim\Desktop\새 폴더\결과"
+
+COLOR_BEFORE   = "#1565C0"   # 진파랑
+COLOR_AFTER    = "#B71C1C"   # 진빨강
+COLOR_SPEC     = "#7B0000"   # 더 진한 빨강 (spec line)
+COLOR_OUT_SPEC = "#6A0DAD"   # 보라 (OOS)
+COLOR_CHANGE   = "red"       # 교체 시점
+
+# ch_step은 색 구분 없이 Before=파랑, After=빨강 고정
+
+CHART_TYPES = {
+    "1":  "Line Plot",
+    "2":  "Scatter Plot",
+    "3":  "Box Plot (Before vs After)",
+    "4":  "Violin Plot",
+    "5":  "Histogram",
+    "6":  "Bar Chart (평균 비교)",
+    "7":  "Heatmap (시간대별 분포)",
+    "8":  "Bubble Chart",
+    "9":  "Control Chart (SPC)",
+    "10": "변화율 Bar Chart",
+}
+
+# ============================================================
+# 헬퍼: 목록 선택
+# ============================================================
+
+def select_from_list(title, options, multi=False):
+    print("\n" + "="*55)
+    print("  {}".format(title))
+    print("="*55)
+    for i, opt in enumerate(options, start=1):
+        print("  [{:>3}] {}".format(i, opt))
+    if multi:
+        print("\n  여러 개: 콤마 구분 / 전체: 0")
+    while True:
+        raw = input("  선택 >> ").strip()
+        if multi and raw == "0":
+            return list(options)
+        try:
+            indices  = [int(x.strip()) for x in raw.split(",")]
+            selected = [options[i-1] for i in indices if 1 <= i <= len(options)]
+            if selected:
+                return selected
+        except Exception:
+            pass
+        print("  [오류] 다시 입력해줘")
+
+
+def select_chart_types():
+    print("\n" + "="*55)
+    print("  차트 종류 선택 (여러 개 가능, 0=전체)")
+    print("="*55)
+    for k, v in CHART_TYPES.items():
+        print("  [{:>2}] {}".format(k, v))
+    print("\n  여러 개: 콤마 구분 / 전체: 0")
+    while True:
+        raw = input("  선택 >> ").strip()
+        if raw == "0":
+            return list(CHART_TYPES.keys())
+        try:
+            keys     = [x.strip() for x in raw.split(",")]
+            selected = [k for k in keys if k in CHART_TYPES]
+            if selected:
+                return selected
+        except Exception:
+            pass
+        print("  [오류] 다시 입력해줘")
+
+
+def select_ch_step_mode():
+    print("\n" + "="*55)
+    print("  ch_step 표시 방식")
+    print("="*55)
+    print("  [1] 오버레이 (한 그래프, step별 색 구분)")
+    print("  [2] Subplot (step별 분리)")
+    while True:
+        raw = input("  선택 >> ").strip()
+        if raw == "1": return "overlay"
+        if raw == "2": return "subplot"
+        print("  [오류] 1 또는 2")
+
+
+# ============================================================
+# 헬퍼: 날짜 입력
+# ============================================================
+
+def input_datetime(prompt):
+    formats = [
+        "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d",
+        "%Y/%m/%d %H:%M:%S", "%Y/%m/%d %H:%M", "%Y/%m/%d",
+    ]
+    while True:
+        raw = input("  {}\n  >> ".format(prompt)).strip()
+        for fmt in formats:
+            try:
+                return datetime.strptime(raw, fmt)
+            except ValueError:
+                continue
+        print("  [오류] 예) 2026-01-31 08:30:00  또는  2026-01-31")
+
+
+def input_period():
+    print("\n" + "="*55)
+    print("  조회 기간 입력")
+    print("="*55)
+    while True:
+        start_dt = input_datetime("시작 날짜시간")
+        while True:
+            end_dt = input_datetime("종료 날짜시간")
+            if end_dt > start_dt:
+                break
+            print("  [오류] 종료가 시작보다 앞이야. 종료만 다시 입력해줘.\n")
+        diff = end_dt - start_dt
+        print("\n  → {} ~ {} ({}일 {}시간)".format(
+            start_dt.strftime("%Y.%m.%d %H:%M:%S"),
+            end_dt.strftime("%Y.%m.%d %H:%M:%S"),
+            diff.days, diff.seconds // 3600,
+        ))
+        if input("  맞아? (y/n) >> ").strip().lower() == "y":
+            return start_dt, end_dt
+        print("  다시 입력할게.\n")
+
+
+# ============================================================
+# 헬퍼: subplot 도메인 계산
+# ============================================================
+
+def get_subplot_domains(n_rows, vert_spacing):
+    """각 subplot의 (bottom, top) y 도메인 반환 (row1=맨위 순서)"""
+    if n_rows == 1:
+        return [(0.0, 1.0)]
+    total_spacing = vert_spacing * (n_rows - 1)
+    row_height    = (1.0 - total_spacing) / n_rows
+    domains = []
+    for i in range(n_rows):
+        top    = 1.0 - i * (row_height + vert_spacing)
+        bottom = top - row_height
+        domains.append((round(bottom, 4), round(top, 4)))
+    return domains
+
+
+# ============================================================
+# 헬퍼: timestamp 변환 (add_vline용)
+# ============================================================
+
+def to_timestamp_ms(dt):
+    """pd.Timestamp → plotly용 ms 정수 변환"""
+    return int(pd.Timestamp(dt).timestamp() * 1000)
+
+
+# ============================================================
+# 헬퍼: Series에서 안전하게 값 가져오기
+# ============================================================
+
+def safe_val(series_row, key, default="N/A"):
+    """pandas Series에서 안전하게 값 추출 (v1 KeyError 방지)"""
+    try:
+        val = series_row[key]
+        return str(val) if pd.notna(val) else default
+    except (KeyError, TypeError):
+        return default
+
+
+# ============================================================
+# 1. Excel 이력 로드 (xlwings)
+# ============================================================
+
+def load_history_excel(path):
+    print("\n[1] Excel 이력 로드 중...")
+    if not os.path.exists(path):
+        print("  [오류] 파일 없음: {}".format(path))
+        exit()
+    app = xw.App(visible=False)
+    try:
+        wb       = app.books.open(path)
+        all_data = []
+        for sheet in wb.sheets:
+            try:
+                last_row = sheet.range("A1").end("down").row
+                if last_row < 2:
+                    continue
+                data = sheet.range("A2:E{}".format(last_row)).value
+                for row in data:
+                    if not row or row[0] is None:
+                        continue
+                    all_data.append({
+                        "equip_id":    str(row[0]).strip().upper(),
+                        "chamber":     str(row[1]).strip().upper() if row[1] else "",
+                        "part_name":   str(row[2]).strip().upper() if row[2] else "",
+                        "part_type":   str(row[3]).strip()         if row[3] else "",
+                        "change_date": pd.to_datetime(row[4])      if row[4] else None,
+                    })
+            except Exception as e:
+                print("  [경고] 시트 '{}' 실패: {}".format(sheet.name, e))
+        wb.close()
+    finally:
+        app.quit()
+
+    if not all_data:
+        print("  [오류] 데이터 없음")
+        exit()
+    result = pd.DataFrame(all_data).dropna(subset=["change_date"])
+    print("    → {}건 로드 완료".format(len(result)))
+    return result
+
+
+# ============================================================
+# 2. param_name 조회 (2시간 → 24시간 fallback)
+# ============================================================
+
+def fetch_param_list(equip_id):
+    def _q(interval):
+        sql = (
+            "WITH base AS ("
+            "  SELECT unnest(param_name) AS param_name"
+            "  FROM fab.m_erdtsum_data_agg"
+            "  WHERE line_id IN ('PFBP','PFPB') AND eqp_id='{}'"
+            "    AND area='CVD' AND create_time >= now() - INTERVAL {}"
+            ") SELECT DISTINCT UPPER(param_name) AS param_name FROM base"
+            " WHERE param_name IS NOT NULL ORDER BY UPPER(param_name)"
+        ).format(equip_id, interval)
+        try:
+            r = bdq.getData(sql)
+            if not isinstance(r, pd.DataFrame): r = pd.DataFrame(r)
+            return [] if r.empty else r["param_name"].dropna().str.strip().tolist()
+        except Exception as e:
+            print("  [오류] {}".format(e))
+            return []
+
+    print("\n    param_name 조회 중... (2시간)")
+    params = _q("2 HOUR")
+    if not params:
+        print("  [안내] 24시간 재시도...")
+        params = _q("24 HOUR")
+    if not params:
+        print("  [경고] 데이터 없음 → 설비 idle 상태일 수 있어.")
+    return params
+
+
+# ============================================================
+# 3. ch_step 조회 (2시간 → 24시간 fallback)
+# ============================================================
+
+def fetch_ch_step_list(equip_id, chamber):
+    def _q(interval):
+        sql = (
+            "WITH base AS ("
+            "  SELECT unnest(ch_step) AS ch_step"
+            "  FROM fab.m_erdtsum_data_agg"
+            "  WHERE line_id IN ('PFBP','PFPB') AND eqp_id='{}'"
+            "    AND disp_name='{}' AND area='CVD'"
+            "    AND create_time >= now() - INTERVAL {}"
+            ") SELECT DISTINCT ch_step FROM base"
+            " WHERE ch_step IS NOT NULL ORDER BY ch_step"
+        ).format(equip_id, chamber, interval)
+        try:
+            r = bdq.getData(sql)
+            if not isinstance(r, pd.DataFrame): r = pd.DataFrame(r)
+            return [] if r.empty else r["ch_step"].dropna().str.strip().tolist()
+        except Exception as e:
+            print("  [오류] {}".format(e))
+            return []
+
+    print("\n    ch_step 조회 중... (2시간)")
+    steps = _q("2 HOUR")
+    if not steps:
+        print("  [안내] 24시간 재시도...")
+        steps = _q("24 HOUR")
+    if not steps:
+        print("  [안내] ch_step 없음 → 전체")
+    return steps
+
+
+# ============================================================
+# 4. FDC 데이터 조회
+# ============================================================
+
+def fetch_fdc_data(equip_id, chamber, param_names, ch_steps, change_dates, start_dt, end_dt):
+    print("\n[2] FDC 데이터 조회 중...")
+    try:
+        bdq.getData("SELECT 1")
+    except Exception:
+        print("    → AD 로그인 필요")
+        bdq.login()
+
+    param_in   = ", ".join(["'{}'".format(p) for p in param_names])
+    total_days = (end_dt - start_dt).days
+    half_days  = max(1, total_days // 2)
+    start_ts   = pd.Timestamp(start_dt)
+    end_ts     = pd.Timestamp(end_dt)
+    valid_dates = [d for d in change_dates if start_ts <= d <= end_ts]
+
+    if valid_dates:
+        parts = []
+        for d in valid_dates:
+            s = max(start_ts, d - pd.Timedelta(days=half_days)).strftime("%Y-%m-%d %H:%M:%S")
+            e = min(end_ts,   d + pd.Timedelta(days=half_days)).strftime("%Y-%m-%d %H:%M:%S")
+            parts.append("(create_time >= '{}' AND create_time <= '{}')".format(s, e))
+        date_cond = "({})".format(" OR ".join(parts))
+    else:
+        print("  [안내] 전체 기간 조회")
+        date_cond = "create_time >= '{}' AND create_time <= '{}'".format(
+            start_ts.strftime("%Y-%m-%d %H:%M:%S"),
+            end_ts.strftime("%Y-%m-%d %H:%M:%S"),
+        )
+
+    ch_filter = ""
+    if ch_steps:
+        ch_filter = "AND ch_step IN ({})".format(
+            ", ".join(["'{}'".format(s) for s in ch_steps])
+        )
+
+    sql = (
+        "WITH unnested AS ("
+        "  SELECT eqp_id, disp_name, step_seq, ppid, lotid, wafer_no, slot_no, recipeid,"
+        "    unnest(act_time) AS act_time,"
+        "    unnest(param_name) AS param_name,"
+        "    unnest(ch_step) AS ch_step,"
+        "    unnest(param_value) AS param_value,"
+        "    unnest(upper_spec) AS upper_spec,"
+        "    unnest(lower_spec) AS lower_spec"
+        "  FROM fab.m_erdtsum_data_agg"
+        "  WHERE line_id IN ('PFBP','PFPB') AND eqp_id='{}'"
+        "    AND disp_name='{}' AND lottype<>'-' AND area='CVD' AND {}"
+        ") SELECT * FROM unnested"
+        " WHERE UPPER(param_name) IN ({}) {}"
+    ).format(equip_id, chamber, date_cond, param_in, ch_filter)
+
+    try:
+        result = bdq.getData(sql)
+        if not isinstance(result, pd.DataFrame):
+            result = pd.DataFrame(result)
+    except Exception as e:
+        print("  [오류] {}".format(e))
+        return pd.DataFrame()
+
+    if result.empty:
+        print("    → [경고] 데이터 없음")
+        return pd.DataFrame()
+
+    result["act_time"]    = pd.to_datetime(result["act_time"], errors="coerce")
+    result["equip_id"]    = result["eqp_id"].str.strip().str.upper()
+    result["chamber"]     = result["disp_name"].str.strip().str.upper()
+    result["param_name"]  = result["param_name"].str.strip().str.upper()
+    result["param_value"] = pd.to_numeric(result["param_value"], errors="coerce")
+    result["upper_spec"]  = pd.to_numeric(result["upper_spec"],  errors="coerce")
+    result["lower_spec"]  = pd.to_numeric(result["lower_spec"],  errors="coerce")
+    result = result.dropna(subset=["act_time", "param_value"])
+    result = result.drop_duplicates(
+        subset=["equip_id", "chamber", "act_time", "param_name", "ch_step"]
+    ).reset_index(drop=True)
+
+    print("    → {}건 로드 완료 (중복 제거 후)".format(len(result)))
+    return result
+
+
+# ============================================================
+# 5. 전/후 데이터 추출
+# ============================================================
+
+def extract_before_after(fdc_df, history_df, equip_id, chamber, part_name, param_name, start_dt, end_dt):
+    hist = history_df[
+        (history_df["equip_id"]  == equip_id.upper()) &
+        (history_df["chamber"]   == chamber.upper()) &
+        (history_df["part_name"] == part_name.upper())
+    ].copy()
+
+    if hist.empty:
+        print("  [경고] 교체 이력 없음")
+        return pd.DataFrame()
+
+    start_ts = pd.Timestamp(start_dt)
+    end_ts   = pd.Timestamp(end_dt)
+
+    hist = hist[
+        (hist["change_date"] >= start_ts) &
+        (hist["change_date"] <= end_ts)
+    ].sort_values("change_date").reset_index(drop=True)
+
+    if hist.empty:
+        print("  [경고] 기간 내 교체 없음")
+        return pd.DataFrame()
+
+    fdc = fdc_df[fdc_df["param_name"] == param_name.upper()].copy()
+    if fdc.empty:
+        print("  [경고] FDC 없음: {}".format(param_name))
+        return pd.DataFrame()
+
+    results = []
+    n = len(hist)
+
+    for i in range(n):
+        change_date  = hist.iloc[i]["change_date"]
+        window_start = start_ts if i == 0   else hist.iloc[i-1]["change_date"]  # iloc 사용
+        window_end   = end_ts   if i == n-1 else hist.iloc[i+1]["change_date"]  # iloc 사용
+
+        window = fdc[
+            (fdc["act_time"] >= window_start) &
+            (fdc["act_time"] <= window_end)
+        ].copy()
+
+        if window.empty:
+            continue
+
+        window["change_date"]  = change_date
+        window["before_after"] = (window["act_time"] >= change_date).map(
+            {True: "After", False: "Before"}
+        )
+        window["event_label"] = "{}-{} {} ({})".format(
+            equip_id, chamber,
+            hist.iloc[i]["part_name"],
+            change_date.strftime("%Y.%m.%d"),
+        )
+        results.append(window)
+
+    if not results:
+        print("  [경고] Before/After 없음")
+        return pd.DataFrame()
+
+    return pd.concat(results, ignore_index=True)
+
+
+# ============================================================
+# 6. Spec 벗어난 데이터 판별
+# ============================================================
+
+def mark_out_of_spec(df):
+    df = df.copy()
+    df["out_of_spec"] = False
+    df.loc[df["upper_spec"].notna() & (df["param_value"] > df["upper_spec"]), "out_of_spec"] = True
+    df.loc[df["lower_spec"].notna() & (df["param_value"] < df["lower_spec"]), "out_of_spec"] = True
+    return df
+
+
+# ============================================================
+# 7. 통계 계산 + 패널 텍스트
+# ============================================================
+
+def calc_statistics(df):
+    stats = {}
+    for event_label, group in df.groupby("event_label"):
+        stats[event_label] = {}
+        for ba in ["Before", "After"]:
+            data = group[group["before_after"] == ba]["param_value"].dropna()
+            if data.empty:
+                stats[event_label][ba] = None
+                continue
+            oos = int(group[(group["before_after"] == ba) & (group["out_of_spec"])]["param_value"].count())
+            stats[event_label][ba] = {
+                "mean":  round(data.mean(), 4),
+                "std":   round(data.std(),  4) if len(data) > 1 else 0.0,
+                "min":   round(data.min(),  4),
+                "max":   round(data.max(),  4),
+                "count": len(data),
+                "oos":   oos,
+            }
+        b = stats[event_label].get("Before")
+        a = stats[event_label].get("After")
+        if b and a and abs(b["mean"]) > 1e-10:
+            stats[event_label]["change_rate"] = round(
+                (a["mean"] - b["mean"]) / abs(b["mean"]) * 100, 2
+            )
+        else:
+            stats[event_label]["change_rate"] = None
+    return stats
+
+
+def make_stat_text(stats):
+    lines = ["<b>📊 통계 요약</b>"]
+    for event_label, s in stats.items():
+        lines.append("<br><b>{}</b>".format(event_label))
+        for ba in ["Before", "After"]:
+            color = "#1565C0" if ba == "Before" else "#B71C1C"
+            if s.get(ba):
+                lines.append(
+                    "<span style='color:{}'>{}</span>: 평균 {} | std {} | OOS {}건".format(
+                        color, ba, s[ba]["mean"], s[ba]["std"], s[ba]["oos"]
+                    )
+                )
+        cr = s.get("change_rate")
+        if cr is not None:
+            arrow = "▲" if cr > 0 else "▼"
+            lines.append("변화율: {} {:.2f}%".format(arrow, abs(cr)))
+    return "<br>".join(lines)
+
+
+# ============================================================
+# 8. 공통 헬퍼
+# ============================================================
+
+def make_hover(row, param_name):
+    """pandas Series → hover 문자열 (safe_val로 KeyError 방지)"""
+    parts = [
+        "<b>" + safe_val(row, "event_label") + "</b>",
+        "시간: " + str(row["act_time"]),
+        param_name + ": " + str(round(float(row["param_value"]), 4)),
+        "Before/After: " + safe_val(row, "before_after"),
+        "Spec: " + safe_val(row, "lower_spec") + " ~ " + safe_val(row, "upper_spec"),
+        "PPID: " + safe_val(row, "ppid"),
+        "Recipe: " + safe_val(row, "recipeid"),
+        "LotID: " + safe_val(row, "lotid"),
+        "Wafer No: " + safe_val(row, "wafer_no"),
+        "Slot No: " + safe_val(row, "slot_no"),
+        "Step Seq: " + safe_val(row, "step_seq"),
+    ]
+    return "<br>".join(parts) + "<extra></extra>"
+
+
+def build_hovertemplates(df, param_name):
+    """DataFrame 전체 → hover 리스트 (iterrows 한번만 호출)"""
+    return [make_hover(row, param_name) for _, row in df.iterrows()]
+
+
+def add_spec_shapes(fig, df, row_idx=None, col=1, domains=None):
+    """
+    Upper/Lower Spec 라인 추가
+    - 단순 figure: add_hline 사용
+    - subplot: yref="y" / "y2" 등으로 정확히 지정
+    domains 파라미터는 호환성 유지용으로만 남겨둠 (실제 미사용)
+    """
+    upper = df["upper_spec"].dropna()
+    lower = df["lower_spec"].dropna()
+
+    def _add(val, label):
+        if row_idx is not None:
+            # subplot 모드: yref를 해당 subplot 축으로 지정
+            yr = "y" if row_idx == 1 else "y{}".format(row_idx)
+            fig.add_shape(
+                type="line",
+                xref="paper", yref=yr,
+                x0=0, x1=1, y0=val, y1=val,
+                line=dict(dash="dot", color=COLOR_SPEC, width=1.5),
+            )
+            fig.add_annotation(
+                xref="paper", yref=yr,
+                x=1.01, y=val,
+                text=label, showarrow=False,
+                font=dict(color=COLOR_SPEC, size=9),
+            )
+        else:
+            # 단순 figure: add_hline 사용
+            fig.add_hline(
+                y=val,
+                line_dash="dot", line_color=COLOR_SPEC, line_width=1.5,
+                annotation_text=label, annotation_position="right",
+            )
+
+    if not upper.empty:
+        _add(round(upper.mean(), 4), "USL:{}".format(round(upper.mean(), 4)))
+    if not lower.empty:
+        _add(round(lower.mean(), 4), "LSL:{}".format(round(lower.mean(), 4)))
+
+
+def add_change_vlines(fig, change_dates, row=None, col=None):
+    """교체 시점 세로선 (timestamp*1000 으로 TypeError 방지)"""
+    kwargs = {"row": row, "col": col} if row is not None else {}
+    for cd in change_dates:
+        fig.add_vline(
+            x=to_timestamp_ms(cd),
+            line_dash="dot", line_color=COLOR_CHANGE, line_width=2,
+            **kwargs
+        )
+
+
+def base_layout(title, stat_text, height=600):
+    return dict(
+        title=dict(text=title, font=dict(size=13)),
+        hovermode="closest",
+        dragmode="zoom",             # 왼→오른 드래그 = 사각형 확대 / 더블클릭 = 원복
+        height=height,
+        plot_bgcolor="white",
+        paper_bgcolor="#F8F9FA",
+        legend=dict(
+            x=1.02, y=1.0,
+            font=dict(size=10),
+            bgcolor="rgba(255,255,255,0.9)",
+            itemclick="toggle",        # 클릭으로 해당 step 숨기기/보이기
+            itemdoubleclick="toggleothers",  # 더블클릭으로 해당 step만 보이기
+        ),
+        annotations=[dict(
+            x=1.25, y=0.5,
+            xref="paper", yref="paper",
+            text=stat_text,
+            showarrow=False, align="left",
+            bgcolor="rgba(255,255,255,0.95)",
+            bordercolor="#CCCCCC", borderwidth=1,
+            font=dict(size=9),
+        )],
+        margin=dict(r=380),
+    )
+
+
+def range_selector_xaxis(title_text="act_time"):
+    """rangeslider 제거, rangeselector 버튼만 유지"""
+    return dict(
+        title_text=title_text,
+        rangeslider_visible=False,
+        rangeselector=dict(
+            buttons=[
+                dict(count=1,  label="1일",  step="day",   stepmode="backward"),
+                dict(count=7,  label="1주",  step="day",   stepmode="backward"),
+                dict(count=1,  label="1달",  step="month", stepmode="backward"),
+                dict(count=3,  label="3달",  step="month", stepmode="backward"),
+                dict(step="all", label="전체"),
+            ],
+            bgcolor="#F0F0F0",
+            activecolor="#1565C0",
+            font=dict(size=10),
+        ),
+    )
+
+
+def build_custom_ui(steps):
+    """
+    Step 드롭다운 + 날짜 입력 UI HTML/JS 생성
+    steps: ch_step 목록 리스트
+    """
+    step_options = "\n".join([
+        "<option value=\"{}\">{}</option>".format(s, s) for s in steps
+    ])
+
+    return """
+<style>
+  #custom-controls {{
+    display: flex; align-items: center; gap: 12px;
+    padding: 8px 14px; background: #F0F4F8;
+    border-bottom: 1px solid #CDD5E0;
+    font-family: sans-serif; font-size: 13px;
+    flex-wrap: wrap;
+  }}
+  #custom-controls label {{ font-weight: bold; color: #333; }}
+  #step-select {{
+    padding: 4px 8px; border: 1px solid #BBB;
+    border-radius: 4px; background: white;
+    font-size: 13px; cursor: pointer; min-width: 130px;
+  }}
+  .date-input {{
+    padding: 4px 8px; border: 1px solid #BBB;
+    border-radius: 4px; font-size: 13px; width: 130px;
+  }}
+  .btn-apply {{
+    padding: 4px 12px; background: #1565C0; color: white;
+    border: none; border-radius: 4px; cursor: pointer; font-size: 13px;
+  }}
+  .btn-apply:hover {{ background: #0D47A1; }}
+  .btn-reset {{
+    padding: 4px 12px; background: #757575; color: white;
+    border: none; border-radius: 4px; cursor: pointer; font-size: 13px;
+  }}
+  .btn-reset:hover {{ background: #424242; }}
+  .ctrl-group {{ display: flex; align-items: center; gap: 6px; }}
+  .divider {{ color: #CCC; font-size: 18px; }}
+</style>
+
+<div id="custom-controls">
+  <div class="ctrl-group">
+    <label>📊 ch_step:</label>
+    <select id="step-select" onchange="filterByStep(this.value)">
+      <option value="ALL">전체 (ALL)</option>
+      {step_options}
+    </select>
+  </div>
+  <span class="divider">|</span>
+  <div class="ctrl-group">
+    <label>📅 시작일:</label>
+    <input type="date" id="date-start" class="date-input">
+    <label>종료일:</label>
+    <input type="date" id="date-end" class="date-input">
+    <button class="btn-apply" onclick="applyDateRange()">적용</button>
+    <button class="btn-reset" onclick="resetDateRange()">전체</button>
+  </div>
+</div>
+
+<script>
+// plotly div 렌더 완료 후 실행 보장
+function waitForPlotly(callback) {{
+  var attempts = 0;
+  var timer = setInterval(function() {{
+    var gd = document.getElementById("plotly-chart");
+    if (gd && gd.data && gd.data.length > 0) {{
+      clearInterval(timer);
+      callback(gd);
+    }}
+    if (++attempts > 50) clearInterval(timer);
+  }}, 100);
+}}
+
+// Step 필터 - legendgroup 기준
+function filterByStep(step) {{
+  var gd = document.getElementById("plotly-chart");
+  var updates = [];
+  for (var i = 0; i < gd.data.length; i++) {{
+    var lg = gd.data[i].legendgroup || "";
+    var visible;
+    if (step === "ALL") {{
+      visible = true;
+    }} else {{
+      visible = (lg.indexOf(step) !== -1) ? true : "legendonly";
+    }}
+    updates.push(visible);
+  }}
+  Plotly.restyle(gd, {{visible: updates}});
+}}
+
+// 날짜 범위 적용 - ISO 형식
+function applyDateRange() {{
+  var gd = document.getElementById("plotly-chart");
+  var s = document.getElementById("date-start").value;
+  var e = document.getElementById("date-end").value;
+  if (!s || !e) {{ alert("시작일과 종료일을 모두 입력해줘!"); return; }}
+  if (s >= e) {{ alert("종료일이 시작일보다 앞이야!"); return; }}
+  Plotly.relayout(gd, {{
+    "xaxis.range": [s + "T00:00:00", e + "T23:59:59"]
+  }});
+}}
+
+// 날짜 전체 원복
+function resetDateRange() {{
+  var gd = document.getElementById("plotly-chart");
+  document.getElementById("date-start").value = "";
+  document.getElementById("date-end").value   = "";
+  Plotly.relayout(gd, {{"xaxis.autorange": true}});
+}}
+
+// 초기 날짜 자동 설정
+waitForPlotly(function(gd) {{
+  var allX = [];
+  gd.data.forEach(function(t) {{ if (t.x) allX = allX.concat(t.x); }});
+  if (allX.length === 0) return;
+  var dates = allX.map(function(d) {{
+    return new Date(typeof d === "string" ? d.replace(" ", "T") : d);
+  }}).filter(function(d) {{ return !isNaN(d.getTime()); }});
+  if (dates.length === 0) return;
+  var minD = new Date(Math.min.apply(null, dates));
+  var maxD = new Date(Math.max.apply(null, dates));
+  document.getElementById("date-start").value = minD.toISOString().slice(0, 10);
+  document.getElementById("date-end").value   = maxD.toISOString().slice(0, 10);
+}});
+</script>
+""".format(step_options=step_options)
+
+
+def save_show(fig, title, output_dir, steps=None):
+    """
+    fig 저장 + 표시
+    steps: ch_step 목록 (Step 드롭다운 UI 생성용, None이면 UI 없음)
+    """
+    os.makedirs(output_dir, exist_ok=True)
+    safe = (title
+            .replace(" ", "_").replace("/", "-").replace(":", "-")
+            .replace("[","").replace("]","").replace("~","-"))
+    path = os.path.join(output_dir, "{}.html".format(safe))
+
+    config = {
+        "scrollZoom": True,
+        "displayModeBar": True,
+        "modeBarButtonsToRemove": ["select2d", "lasso2d"],
+        "toImageButtonOptions": {
+            "format": "png",
+            "filename": safe,
+            "scale": 2,
+        },
+    }
+
+    try:
+        if steps and len(steps) > 1 and steps != ["ALL"]:
+            # Step 드롭다운 + 날짜 UI 삽입
+            html_str = fig.to_html(
+                include_plotlyjs="cdn",
+                div_id="plotly-chart",
+                config=config,
+            )
+            custom_ui = build_custom_ui(steps)
+            html_str = html_str.replace("<body>", "<body>" + custom_ui)
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(html_str)
+        else:
+            fig.write_html(path, config=config)
+        print("    → HTML 저장: {}".format(path))
+    except Exception as e:
+        print("    → 저장 실패: {}".format(e))
+    fig.show(config=config)
+
+
+def split_in_out(df, ba):
+    """Before/After 중 In Spec / Out of Spec 분리"""
+    sub = df[df["before_after"] == ba]
+    return sub[~sub["out_of_spec"]].copy(), sub[sub["out_of_spec"]].copy()
+
+
+# ============================================================
+# 9. 차트 함수 10종
+# ============================================================
+
+# ① Line Plot
+def chart_line(df, param, steps, mode, change_dates, title, stat_text, out_dir):
+    legend_shown = set()
+
+    if mode == "overlay":
+        fig = go.Figure()
+        for step in steps:
+            sdf = df[df["ch_step"] == step] if step != "ALL" else df
+            step_label = "" if step == "ALL" else " [{}]".format(step)
+
+            for ba, color in [("Before", COLOR_BEFORE), ("After", COLOR_AFTER)]:
+                in_s, out_s = split_in_out(sdf, ba)
+                in_s  = in_s.sort_values("act_time")
+                out_s = out_s.sort_values("act_time")
+                name_in  = "{}{} In Spec".format(ba, step_label)
+                name_oos = "{}{} OOS".format(ba, step_label)
+
+                if not in_s.empty:
+                    fig.add_trace(go.Scatter(
+                        x=in_s["act_time"], y=in_s["param_value"],
+                        mode="lines+markers",
+                        name=name_in,
+                        legendgroup=name_in,
+                        showlegend=(name_in not in legend_shown),
+                        line=dict(color=color, width=2),
+                        marker=dict(size=5, color=color),
+                        hovertemplate=build_hovertemplates(in_s, param),
+                    ))
+                    legend_shown.add(name_in)
+                if not out_s.empty:
+                    fig.add_trace(go.Scatter(
+                        x=out_s["act_time"], y=out_s["param_value"],
+                        mode="markers",
+                        name=name_oos,
+                        legendgroup=name_oos,
+                        showlegend=(name_oos not in legend_shown),
+                        marker=dict(size=9, color=COLOR_OUT_SPEC, symbol="x"),
+                        hovertemplate=build_hovertemplates(out_s, param),
+                    ))
+                    legend_shown.add(name_oos)
+
+        add_spec_shapes(fig, df)
+        add_change_vlines(fig, change_dates)
+        fig.update_layout(**base_layout(title, stat_text))
+        fig.update_xaxes(**range_selector_xaxis())
+        fig.update_yaxes(title_text=param)
+
+    else:  # subplot
+        n  = len(steps)
+        vs = 0.05 if n == 1 else min(0.07, 1.0 / (n - 1))
+        fig = make_subplots(
+            rows=n, cols=1,
+            subplot_titles=["ch_step: {}".format(s) for s in steps],
+            vertical_spacing=vs,
+        )
+
+        for ri, step in enumerate(steps, start=1):
+            sdf = df[df["ch_step"] == step] if step != "ALL" else df
+            for ba, color in [("Before", COLOR_BEFORE), ("After", COLOR_AFTER)]:
+                in_s, out_s = split_in_out(sdf, ba)
+                in_s  = in_s.sort_values("act_time")
+                out_s = out_s.sort_values("act_time")
+                name_in  = "{} In Spec".format(ba)
+                name_oos = "{} OOS".format(ba)
+
+                if not in_s.empty:
+                    fig.add_trace(go.Scatter(
+                        x=in_s["act_time"], y=in_s["param_value"],
+                        mode="lines+markers",
+                        name=name_in,
+                        legendgroup=name_in,
+                        showlegend=(name_in not in legend_shown),
+                        line=dict(color=color, width=2),
+                        marker=dict(size=5, color=color),
+                        hovertemplate=build_hovertemplates(in_s, param),
+                    ), row=ri, col=1)
+                    legend_shown.add(name_in)
+                if not out_s.empty:
+                    fig.add_trace(go.Scatter(
+                        x=out_s["act_time"], y=out_s["param_value"],
+                        mode="markers",
+                        name=name_oos,
+                        legendgroup=name_oos,
+                        showlegend=(name_oos not in legend_shown),
+                        marker=dict(size=9, color=COLOR_OUT_SPEC, symbol="x"),
+                        hovertemplate=build_hovertemplates(out_s, param),
+                    ), row=ri, col=1)
+                    legend_shown.add(name_oos)
+            add_spec_shapes(fig, sdf, row_idx=ri, col=1)
+            add_change_vlines(fig, change_dates, row=ri, col=1)
+
+        fig.update_layout(**base_layout(title, stat_text, height=max(500, 400*n)))
+        fig.update_yaxes(title_text=param)
+        fig.update_xaxes(**range_selector_xaxis(), row=n, col=1)
+        fig.update_xaxes(title_text="act_time", row=1, col=1)
+
+    save_show(fig, title, out_dir, steps=steps)
+
+
+# ② Scatter Plot
+def chart_scatter(df, param, change_dates, title, stat_text, out_dir, steps=None):
+    fig = go.Figure()
+    for ba, color in [("Before", COLOR_BEFORE), ("After", COLOR_AFTER)]:
+        in_s, out_s = split_in_out(df, ba)
+        if not in_s.empty:
+            fig.add_trace(go.Scatter(
+                x=in_s["act_time"], y=in_s["param_value"],
+                mode="markers",
+                name="{} In Spec".format(ba),
+                marker=dict(size=7, color=color, opacity=0.7),
+                hovertemplate=build_hovertemplates(in_s, param),
+            ))
+        if not out_s.empty:
+            fig.add_trace(go.Scatter(
+                x=out_s["act_time"], y=out_s["param_value"],
+                mode="markers",
+                name="{} OOS".format(ba),
+                marker=dict(size=10, color=COLOR_OUT_SPEC, symbol="x"),
+                hovertemplate=build_hovertemplates(out_s, param),
+            ))
+    add_spec_shapes(fig, df)
+    add_change_vlines(fig, change_dates)
+    fig.update_layout(**base_layout(title, stat_text))
+    fig.update_xaxes(**range_selector_xaxis())
+    fig.update_yaxes(title_text=param)
+    save_show(fig, title, out_dir, steps=steps)
+
+
+# ③ Box Plot
+def chart_box(df, param, title, stat_text, out_dir):
+    fig = go.Figure()
+    for ba, color in [("Before", COLOR_BEFORE), ("After", COLOR_AFTER)]:
+        data = df[df["before_after"] == ba]["param_value"].dropna()
+        if data.empty:
+            continue
+        fig.add_trace(go.Box(
+            y=data, name=ba,
+            marker_color=color,
+            boxmean="sd",
+            hovertemplate=param + ": %{y:.4f}<extra>" + ba + "</extra>",
+        ))
+
+    # Box plot spec: 수평선으로 표시
+    upper = df["upper_spec"].dropna()
+    lower = df["lower_spec"].dropna()
+    if not upper.empty:
+        fig.add_hline(y=upper.mean(), line_dash="dot", line_color=COLOR_SPEC, line_width=1.5,
+                      annotation_text="USL:{}".format(round(upper.mean(),4)), annotation_position="right")
+    if not lower.empty:
+        fig.add_hline(y=lower.mean(), line_dash="dot", line_color=COLOR_SPEC, line_width=1.5,
+                      annotation_text="LSL:{}".format(round(lower.mean(),4)), annotation_position="right")
+
+    fig.update_layout(**base_layout(title, stat_text))
+    fig.update_yaxes(title_text=param)
+    save_show(fig, title, out_dir)
+
+
+# ④ Violin Plot
+def chart_violin(df, param, title, stat_text, out_dir):
+    fig = go.Figure()
+    for ba, color in [("Before", COLOR_BEFORE), ("After", COLOR_AFTER)]:
+        data = df[df["before_after"] == ba]["param_value"].dropna()
+        if data.empty:
+            continue
+        fig.add_trace(go.Violin(
+            y=data, name=ba,
+            fillcolor=color, line_color=color,
+            meanline_visible=True, opacity=0.7,
+        ))
+
+    upper = df["upper_spec"].dropna()
+    lower = df["lower_spec"].dropna()
+    if not upper.empty:
+        fig.add_hline(y=upper.mean(), line_dash="dot", line_color=COLOR_SPEC, line_width=1.5,
+                      annotation_text="USL:{}".format(round(upper.mean(),4)), annotation_position="right")
+    if not lower.empty:
+        fig.add_hline(y=lower.mean(), line_dash="dot", line_color=COLOR_SPEC, line_width=1.5,
+                      annotation_text="LSL:{}".format(round(lower.mean(),4)), annotation_position="right")
+
+    fig.update_layout(**base_layout(title, stat_text))
+    fig.update_yaxes(title_text=param)
+    save_show(fig, title, out_dir)
+
+
+# ⑤ Histogram
+def chart_histogram(df, param, title, stat_text, out_dir):
+    fig = go.Figure()
+    for ba, color in [("Before", COLOR_BEFORE), ("After", COLOR_AFTER)]:
+        data = df[df["before_after"] == ba]["param_value"].dropna()
+        if data.empty:
+            continue
+        fig.add_trace(go.Histogram(
+            x=data, name=ba,
+            marker_color=color, opacity=0.6, nbinsx=30,
+        ))
+
+    # Histogram spec: 수직선
+    upper = df["upper_spec"].dropna()
+    lower = df["lower_spec"].dropna()
+    if not upper.empty:
+        fig.add_vline(x=upper.mean(), line_dash="dot", line_color=COLOR_SPEC, line_width=1.5,
+                      annotation_text="USL", annotation_position="top right")
+    if not lower.empty:
+        fig.add_vline(x=lower.mean(), line_dash="dot", line_color=COLOR_SPEC, line_width=1.5,
+                      annotation_text="LSL", annotation_position="top left")
+
+    fig.update_layout(**base_layout(title, stat_text), barmode="overlay")
+    fig.update_xaxes(title_text=param)
+    fig.update_yaxes(title_text="Count")
+    save_show(fig, title, out_dir)
+
+
+# ⑥ Bar Chart (평균 비교)
+def chart_bar(df, param, title, stat_text, out_dir):
+    fig = go.Figure()
+    for ba, color in [("Before", COLOR_BEFORE), ("After", COLOR_AFTER)]:
+        sub = df[df["before_after"] == ba]
+        if sub.empty:
+            continue
+        means = sub.groupby("event_label")["param_value"].mean().reset_index()
+        fig.add_trace(go.Bar(
+            x=means["event_label"], y=means["param_value"],
+            name=ba, marker_color=color, opacity=0.85,
+            hovertemplate="이벤트: %{x}<br>평균 " + param + ": %{y:.4f}<extra>" + ba + "</extra>",
+        ))
+
+    upper = df["upper_spec"].dropna()
+    lower = df["lower_spec"].dropna()
+    if not upper.empty:
+        fig.add_hline(y=upper.mean(), line_dash="dot", line_color=COLOR_SPEC, line_width=1.5,
+                      annotation_text="USL", annotation_position="right")
+    if not lower.empty:
+        fig.add_hline(y=lower.mean(), line_dash="dot", line_color=COLOR_SPEC, line_width=1.5,
+                      annotation_text="LSL", annotation_position="right")
+
+    fig.update_layout(**base_layout(title, stat_text), barmode="group")
+    fig.update_yaxes(title_text="평균 {}".format(param))
+    save_show(fig, title, out_dir)
+
+
+# ⑦ Heatmap
+def chart_heatmap(df, param, title, stat_text, out_dir):
+    df2 = df.copy()
+    df2["hour"] = df2["act_time"].dt.strftime("%Y-%m-%d %H:00")
+
+    try:
+        pivot = df2.pivot_table(
+            values="param_value",
+            index="before_after",
+            columns="hour",
+            aggfunc="mean",
+        )
+    except Exception as e:
+        print("  [경고] Heatmap pivot 실패: {}".format(e))
+        return
+
+    if pivot.empty or pivot.shape[1] == 0:
+        print("  [경고] Heatmap 데이터 부족")
+        return
+
+    fig = go.Figure(go.Heatmap(
+        z=pivot.values,
+        x=pivot.columns.tolist(),
+        y=pivot.index.tolist(),
+        colorscale="RdBu_r",
+        hovertemplate="시간: %{x}<br>Before/After: %{y}<br>평균: %{z:.4f}<extra></extra>",
+    ))
+    fig.update_layout(**base_layout(title, stat_text))
+    fig.update_xaxes(title_text="시간대")
+    fig.update_yaxes(title_text="Before / After")
+    save_show(fig, title, out_dir)
+
+
+# ⑧ Bubble Chart
+def chart_bubble(df, param, change_dates, title, stat_text, out_dir, steps=None):
+    fig = go.Figure()
+    for ba, color in [("Before", COLOR_BEFORE), ("After", COLOR_AFTER)]:
+        sub = df[df["before_after"] == ba].copy()
+        if sub.empty:
+            continue
+        sub["density"] = sub.groupby("act_time")["param_value"].transform("count")
+        # size를 리스트로 변환 (Series → 에러 방지)
+        sizes = (sub["density"] * 5).clip(upper=50).tolist()
+        fig.add_trace(go.Scatter(
+            x=sub["act_time"], y=sub["param_value"],
+            mode="markers", name=ba,
+            marker=dict(size=sizes, color=color, opacity=0.6, sizemode="area", sizemin=5),
+            hovertemplate=build_hovertemplates(sub, param),
+        ))
+    add_spec_shapes(fig, df)
+    add_change_vlines(fig, change_dates)
+    fig.update_layout(**base_layout(title, stat_text))
+    fig.update_xaxes(**range_selector_xaxis())
+    fig.update_yaxes(title_text=param)
+    save_show(fig, title, out_dir, steps=steps)
+
+
+# ⑨ Control Chart (SPC)
+def chart_control(df, param, change_dates, title, stat_text, out_dir, steps=None):
+    fig = go.Figure()
+    for ba, color in [("Before", COLOR_BEFORE), ("After", COLOR_AFTER)]:
+        sub = df[df["before_after"] == ba].sort_values("act_time")
+        if sub.empty:
+            continue
+        mean = sub["param_value"].mean()
+        std  = sub["param_value"].std()
+        # std NaN 방어 (데이터 1개일 때)
+        if pd.isna(std) or std == 0:
+            std = 0.0
+
+        in_s, out_s = split_in_out(sub, ba)
+        if not in_s.empty:
+            fig.add_trace(go.Scatter(
+                x=in_s["act_time"], y=in_s["param_value"],
+                mode="lines+markers", name=ba,
+                line=dict(color=color, width=1.5),
+                marker=dict(size=5, color=color),
+                hovertemplate=build_hovertemplates(in_s, param),
+            ))
+        if not out_s.empty:
+            fig.add_trace(go.Scatter(
+                x=out_s["act_time"], y=out_s["param_value"],
+                mode="markers", name="{} OOS".format(ba),
+                marker=dict(size=10, color=COLOR_OUT_SPEC, symbol="x"),
+                hovertemplate=build_hovertemplates(out_s, param),
+            ))
+
+        for y_val, label, dash in [
+            (mean,           "Mean({})={:.3f}".format(ba, mean),       "dash"),
+            (mean + 3 * std, "+3σ({})={:.3f}".format(ba, mean+3*std),  "dot"),
+            (mean - 3 * std, "-3σ({})={:.3f}".format(ba, mean-3*std),  "dot"),
+        ]:
+            fig.add_hline(
+                y=y_val, line_dash=dash, line_color=color, line_width=1,
+                annotation_text=label, annotation_position="right",
+            )
+
+    add_spec_shapes(fig, df)
+    add_change_vlines(fig, change_dates)
+    fig.update_layout(**base_layout(title, stat_text))
+    fig.update_xaxes(**range_selector_xaxis())
+    fig.update_yaxes(title_text=param)
+    save_show(fig, title, out_dir, steps=steps)
+
+
+# ⑩ 변화율 Bar Chart
+def chart_change_rate(df, param, title, stat_text, out_dir):
+    events, rates, colors = [], [], []
+    for event_label, group in df.groupby("event_label"):
+        b = group[group["before_after"] == "Before"]["param_value"].mean()
+        a = group[group["before_after"] == "After"]["param_value"].mean()
+        if pd.notna(b) and pd.notna(a) and b != 0:
+            rate = (a - b) / abs(b) * 100
+            events.append(event_label)
+            rates.append(round(rate, 2))
+            colors.append(COLOR_AFTER if rate > 0 else COLOR_BEFORE)
+
+    if not events:
+        print("  [경고] 변화율 데이터 없음")
+        return
+
+    fig = go.Figure(go.Bar(
+        x=events, y=rates,
+        marker_color=colors, opacity=0.85,
+        text=["{}%".format(r) for r in rates],
+        textposition="outside",
+        hovertemplate="이벤트: %{x}<br>변화율: %{y:.2f}%<extra></extra>",
+    ))
+    fig.add_hline(y=0, line_color="black", line_width=1)
+    fig.update_layout(**base_layout(title, stat_text))
+    fig.update_yaxes(title_text="변화율 (%)")
+    save_show(fig, title, out_dir)
+
+
+# ============================================================
+# 10. 메인
+# ============================================================
+
+if __name__ == "__main__":
+
+    print("\n" + "="*55)
+    print("  PHDP FDC 파트 교체 전/후 분석 v2")
+    print("="*55)
+
+    # [1] Excel 이력 로드
+    history_df = load_history_excel(EXCEL_PATH)
+
+    # [2] 설비 선택
+    equip_list = sorted(history_df["equip_id"].unique())
+    equip_id   = select_from_list("설비 선택", equip_list)[0]
+
+    # [3] 챔버 선택
+    chamber_list = sorted(
+        history_df[history_df["equip_id"] == equip_id]["chamber"].unique()
+    )
+    if not chamber_list:
+        print("  [오류] 챔버 없음"); exit()
+    chamber = select_from_list("챔버 선택", chamber_list)[0]
+
+    # [4] Part명 선택 (교체날짜 함께 표시)
+    part_df = history_df[
+        (history_df["equip_id"] == equip_id) &
+        (history_df["chamber"]  == chamber)
+    ].copy()
+    if part_df.empty:
+        print("  [오류] Part 없음"); exit()
+
+    part_options  = []
+    part_name_map = {}
+    for pn, group in part_df.groupby("part_name"):
+        dates   = sorted(group["change_date"].dropna().tolist())
+        display = "{}  [{}]".format(pn, ", ".join([d.strftime("%Y.%m.%d") for d in dates]))
+        part_options.append(display)
+        part_name_map[display] = pn
+
+    selected_display = select_from_list("Part명 선택 (교체날짜 포함)", part_options)[0]
+    part_name    = part_name_map[selected_display]
+    change_dates = [pd.Timestamp(d) for d in sorted(
+        part_df[part_df["part_name"] == part_name]["change_date"].dropna().tolist()
+    )]
+
+    # [5] 기간 입력
+    start_dt, end_dt = input_period()
+    period_label = "{} ~ {}".format(
+        start_dt.strftime("%Y.%m.%d %H:%M"),
+        end_dt.strftime("%Y.%m.%d %H:%M"),
+    )
+
+    # [6] AD 로그인
+    try:
+        bdq.getData("SELECT 1")
+    except Exception:
+        bdq.login()
+
+    # [7] param_name 선택
+    param_list = fetch_param_list(equip_id)
+    if not param_list:
+        print("  [오류] param 없음"); exit()
+
+    print("\n  [안내] 총 {}개 param".format(len(param_list)))
+    print("  0(전체)은 타임아웃 위험 → 필요한 것만 선택 권장")
+    selected_params = select_from_list("Param_name 선택 (0=전체)", param_list, multi=True)
+
+    if selected_params == param_list:
+        print("  [경고] 전체 {}개 → 매우 오래 걸려!".format(len(param_list)))
+        if input("  계속? (y/n) >> ").strip().lower() != "y":
+            selected_params = select_from_list("Param_name 다시 선택", param_list, multi=True)
+
+    # [8] ch_step 선택
+    ch_step_list      = fetch_ch_step_list(equip_id, chamber)
+    selected_ch_steps = None
+    if ch_step_list:
+        ch_step_options = ["전체(ALL)"] + ch_step_list
+        selected_ch_raw = select_from_list("ch_step 선택 (0=전체)", ch_step_options, multi=True)
+        selected_ch_steps = None if "전체(ALL)" in selected_ch_raw else selected_ch_raw
+    else:
+        print("  [안내] ch_step 없음 → 전체")
+
+    # [9] ch_step 표시 방식
+    ch_step_mode = select_ch_step_mode()
+
+    # [10] 차트 종류 선택
+    selected_charts = select_chart_types()
+
+    # [11] FDC 조회
+    fdc_df = fetch_fdc_data(
+        equip_id=equip_id, chamber=chamber,
+        param_names=selected_params, ch_steps=selected_ch_steps,
+        change_dates=change_dates, start_dt=start_dt, end_dt=end_dt,
+    )
+    if fdc_df.empty:
+        print("  [오류] FDC 없음. 종료."); exit()
+
+    # [12] 최종 확인
+    total_graphs = len(selected_params) * len(selected_charts)
+    print("\n  [안내] {}개 param × {}개 차트 = 총 {}개 그래프".format(
+        len(selected_params), len(selected_charts), total_graphs
+    ))
+    if total_graphs > 5:
+        if input("  계속? (y/n) >> ").strip().lower() != "y":
+            exit()
+
+    # [13] 파라미터별 차트 생성
+    for idx, param in enumerate(selected_params, start=1):
+        print("\n" + "="*55)
+        print("  [{}/{}] {}".format(idx, len(selected_params), param))
+        print("="*55)
+
+        df_result = extract_before_after(
+            fdc_df=fdc_df, history_df=history_df,
+            equip_id=equip_id, chamber=chamber,
+            part_name=part_name, param_name=param,
+            start_dt=start_dt, end_dt=end_dt,
+        )
+        if df_result.empty:
+            print("  [건너뜀] 데이터 없음")
+            continue
+
+        df_result = mark_out_of_spec(df_result)
+        stats     = calc_statistics(df_result)
+        stat_text = make_stat_text(stats)
+        steps     = (
+            sorted(df_result["ch_step"].dropna().unique())
+            if "ch_step" in df_result.columns and df_result["ch_step"].notna().any()
+            else ["ALL"]
+        )
+        base_title = "{}-{} [{}] {} [{}]".format(
+            equip_id, chamber, part_name, param, period_label
+        )
+
+        for ck in selected_charts:
+            chart_title = "{} - {}".format(base_title, CHART_TYPES[ck])
+            print("    차트 생성: {}".format(CHART_TYPES[ck]))
+
+            if   ck == "1":  chart_line(df_result, param, steps, ch_step_mode, change_dates, chart_title, stat_text, OUTPUT_DIR)
+            elif ck == "2":  chart_scatter(df_result, param, change_dates, chart_title, stat_text, OUTPUT_DIR, steps=steps)
+            elif ck == "3":  chart_box(df_result, param, chart_title, stat_text, OUTPUT_DIR)
+            elif ck == "4":  chart_violin(df_result, param, chart_title, stat_text, OUTPUT_DIR)
+            elif ck == "5":  chart_histogram(df_result, param, chart_title, stat_text, OUTPUT_DIR)
+            elif ck == "6":  chart_bar(df_result, param, chart_title, stat_text, OUTPUT_DIR)
+            elif ck == "7":  chart_heatmap(df_result, param, chart_title, stat_text, OUTPUT_DIR)
+            elif ck == "8":  chart_bubble(df_result, param, change_dates, chart_title, stat_text, OUTPUT_DIR, steps=steps)
+            elif ck == "9":  chart_control(df_result, param, change_dates, chart_title, stat_text, OUTPUT_DIR, steps=steps)
+            elif ck == "10": chart_change_rate(df_result, param, chart_title, stat_text, OUTPUT_DIR)
+
+    print("\n" + "="*55)
+    print("  [완료] 분석 종료")
+    print("="*55)
