@@ -1,0 +1,1872 @@
+"""
+PHDP FDC 파트 교체 전/후 분석 v3 - Streamlit UI
+=================================================
+실행: streamlit run app_v3.py
+"""
+
+import streamlit as st
+import pandas as pd
+import plotly.graph_objects as go
+from datetime import datetime, timedelta
+import os
+import time
+
+# ── 같은 폴더의 모듈 import ──────────────────────────────────────
+try:
+    import xlwings as xw
+    XLWINGS_OK = True
+except ImportError:
+    XLWINGS_OK = False
+
+try:
+    import bigdataquery as bdq
+    BDQ_OK = True
+except ImportError:
+    BDQ_OK = False
+
+try:
+    from fdc_cache import FDCCache, fetch_fdc_data_cached
+    CACHE_OK = True
+except ImportError:
+    CACHE_OK = False
+
+# ============================================================
+# 설정
+# ============================================================
+
+EXCEL_PATH = r"C:\Users\bgyu1.lim\Desktop\새 폴더\변경점_Page.xlsx"
+OUTPUT_DIR = r"C:\Users\bgyu1.lim\Desktop\새 폴더\결과"
+CACHE_DIR  = r"C:\Users\bgyu1.lim\Desktop\새 폴더\cache"
+
+COLOR_BEFORE   = "#0000CD"   # 미디엄 블루
+COLOR_AFTER    = "#FF0000"   # 레드
+COLOR_SPEC     = "#7B0000"   # 스펙라인 (유지)
+COLOR_OUT_SPEC = "#6A0DAD"   # OOS 보라 (유지)
+COLOR_CHANGE   = "#800080"   # 변경점 선 퍼플
+
+# ============================================================
+# Streamlit 페이지 설정
+# ============================================================
+
+st.set_page_config(
+    page_title="PHDP FDC Analyzer v3",
+    page_icon="⚗",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
+# ── CSS ──────────────────────────────────────────────────────
+st.markdown("""
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  /* ── 전체 배경 (밝은 화이트) ── */
+  .stApp { background: #F5F7FA; color: #1A202C; }
+  section[data-testid="stSidebar"] {
+    background: #FFFFFF !important;
+    border-right: 1px solid #E2E8F0 !important;
+  }
+  section[data-testid="stSidebar"] > div { background: #FFFFFF !important; }
+
+  /* ── 기본 폰트 ── */
+  html, body, [class*="css"] {
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 14px;
+    color: #1A202C;
+  }
+
+  /* ── 헤더 ── */
+  .main-header {
+    background: linear-gradient(135deg, #1565C0 0%, #0D47A1 100%);
+    border-radius: 12px;
+    padding: 18px 24px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .main-header-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 20px;
+    font-weight: 700;
+    color: #FFFFFF;
+    letter-spacing: 1px;
+  }
+  .main-header-sub {
+    font-size: 12px;
+    color: rgba(255,255,255,0.7);
+    margin-top: 4px;
+  }
+  .main-header-badge {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 12px;
+    color: white;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  /* ── 통계 카드 ── */
+  .stat-card {
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 20px 16px;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .stat-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: #718096;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .stat-value {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .stat-sub {
+    font-size: 11px;
+    color: #A0AEC0;
+    margin-top: 6px;
+  }
+  .blue   { color: #1565C0; }
+  .red    { color: #C62828; }
+  .green  { color: #2E7D32; }
+  .yellow { color: #F57F17; }
+  .purple { color: #6A1B9A; }
+
+  /* ── 태그 ── */
+  .tag {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: #EDF2F7;
+    color: #4A5568;
+    border: 1px solid #E2E8F0;
+    margin: 2px;
+  }
+  .tag-blue {
+    background: #EBF4FF;
+    color: #1565C0;
+    border-color: #BEE3F8;
+  }
+  .tag-red {
+    background: #FFF5F5;
+    color: #C62828;
+    border-color: #FED7D7;
+  }
+  .tag-purple {
+    background: #FAF5FF;
+    color: #6A1B9A;
+    border-color: #E9D8FD;
+  }
+
+  /* ── 섹션 제목 (사이드바) ── */
+  .sidebar-section {
+    font-size: 11px;
+    font-weight: 700;
+    color: #718096;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    margin-top: 18px;
+    margin-bottom: 6px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid #E2E8F0;
+  }
+
+  /* ── 정보/경고 박스 ── */
+  .info-box {
+    background: #EBF4FF;
+    border: 1px solid #BEE3F8;
+    border-left: 4px solid #1565C0;
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: #1565C0;
+    margin-bottom: 12px;
+  }
+  .warn-box {
+    background: #FFFBEB;
+    border: 1px solid #FED7AA;
+    border-left: 4px solid #F57F17;
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: #92400E;
+    margin-bottom: 12px;
+  }
+
+  /* ── 빈 상태 ── */
+  .empty-state {
+    text-align: center;
+    padding: 80px 0;
+    color: #A0AEC0;
+  }
+  .empty-icon { font-size: 56px; margin-bottom: 20px; }
+  .empty-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #4A5568;
+    margin-bottom: 10px;
+  }
+  .empty-desc {
+    font-size: 14px;
+    line-height: 1.8;
+    color: #718096;
+  }
+
+  /* ── 차트 섹션 헤더 ── */
+  .chart-section-header {
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 10px 10px 0 0;
+    padding: 12px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #2D3748;
+    border-bottom: 2px solid #1565C0;
+    margin-top: 20px;
+  }
+
+  /* ── Streamlit 기본 위젯 스타일 오버라이드 ── */
+  .stSelectbox label, .stMultiSelect label,
+  .stDateInput label, .stRadio label,
+  .stCheckbox label {
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    color: #2D3748 !important;
+  }
+  .stButton button {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    border-radius: 8px !important;
+  }
+  /* 분석 버튼 */
+  div[data-testid="stButton"] button[kind="primary"] {
+    background: linear-gradient(135deg, #1565C0, #0D47A1) !important;
+    color: white !important;
+    border: none !important;
+    padding: 12px !important;
+    font-size: 15px !important;
+    box-shadow: 0 2px 8px rgba(21,101,192,0.3) !important;
+  }
+  div[data-testid="stButton"] button[kind="primary"]:hover {
+    box-shadow: 0 4px 12px rgba(21,101,192,0.4) !important;
+    transform: translateY(-1px);
+  }
+
+  /* ── 탭 스타일 ── */
+  .stTabs [data-baseweb="tab-list"] {
+    background: #FFFFFF;
+    border-radius: 10px;
+    padding: 4px;
+    border: 1px solid #E2E8F0;
+    gap: 4px;
+  }
+  .stTabs [data-baseweb="tab"] {
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    color: #4A5568 !important;
+    border-radius: 8px !important;
+    padding: 8px 16px !important;
+  }
+  .stTabs [aria-selected="true"] {
+    background: #1565C0 !important;
+    color: white !important;
+  }
+
+  /* ── 사이드바 글자 크기 전체 키움 ── */
+  section[data-testid="stSidebar"] .stSelectbox label,
+  section[data-testid="stSidebar"] .stMultiSelect label,
+  section[data-testid="stSidebar"] .stRadio label,
+  section[data-testid="stSidebar"] .stCheckbox label,
+  section[data-testid="stSidebar"] .stTextInput label {
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    color: #1A202C !important;
+  }
+  section[data-testid="stSidebar"] .stSelectbox div,
+  section[data-testid="stSidebar"] .stMultiSelect div[data-baseweb],
+  section[data-testid="stSidebar"] .stTextInput input {
+    font-size: 14px !important;
+  }
+  section[data-testid="stSidebar"] .stCheckbox span,
+  section[data-testid="stSidebar"] .stRadio span {
+    font-size: 14px !important;
+    color: #2D3748 !important;
+  }
+  section[data-testid="stSidebar"] .stButton button {
+    font-size: 13px !important;
+  }
+  /* 날짜 현재값 표시 */
+  .date-preview {
+    background: #EBF4FF;
+    border: 1px solid #BEE3F8;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #1565C0;
+    margin: 8px 0;
+    line-height: 1.6;
+  }
+  .date-preview-label {
+    font-size: 11px;
+    color: #718096;
+    margin-bottom: 4px;
+  }
+
+  /* ── 메인 콘텐츠 패딩 ── */
+  .main .block-container { padding-top: 24px !important; }
+</style>
+""", unsafe_allow_html=True)
+
+# ============================================================
+# 캐시된 데이터 로드 함수 (Streamlit 캐싱)
+# ============================================================
+
+@st.cache_data(show_spinner=False)
+def cached_load_excel(path, _mtime):
+    """Excel 이력 로드 - 파일 수정시간 기반 캐시 (파일 바뀌면 자동 재로드)"""
+    if not XLWINGS_OK:
+        return pd.DataFrame()
+    if not os.path.exists(path):
+        return pd.DataFrame()
+    app = xw.App(visible=False)
+    try:
+        wb       = app.books.open(path)
+        all_data = []
+        for sheet in wb.sheets:
+            try:
+                last_row = sheet.range("A1").end("down").row
+                if last_row < 2:
+                    continue
+                data = sheet.range("A2:E{}".format(last_row)).value
+                for row in data:
+                    if not row or row[0] is None:
+                        continue
+                    all_data.append({
+                        "equip_id":    str(row[0]).strip().upper(),
+                        "chamber":     str(row[1]).strip().upper() if row[1] else "",
+                        "part_name":   str(row[2]).strip().upper() if row[2] else "",
+                        "part_type":   str(row[3]).strip()         if row[3] else "",
+                        "change_date": pd.to_datetime(row[4])      if row[4] else None,
+                    })
+            except Exception:
+                pass
+        wb.close()
+    finally:
+        app.quit()
+    if not all_data:
+        return pd.DataFrame()
+    return pd.DataFrame(all_data).dropna(subset=["change_date"])
+
+
+@st.cache_data(ttl=1800, show_spinner=False)
+def cached_fetch_params(equip_id):
+    """param_name 목록 조회 (30분 캐시)"""
+    if not BDQ_OK:
+        return ["ESC_CURRENT_AVG_T", "RF_POWER_FWD", "PRESSURE_AVG", "GAS_FLOW_SIH4"]
+    def _q(interval):
+        sql = (
+            "WITH base AS ("
+            "  SELECT unnest(param_name) AS param_name"
+            "  FROM fab.m_erdtsum_data_agg"
+            "  WHERE line_id IN ('PFBP','PFPB') AND eqp_id='{}'"
+            "    AND area='CVD' AND create_time >= now() - INTERVAL {}"
+            ") SELECT DISTINCT UPPER(param_name) AS param_name FROM base"
+            " WHERE param_name IS NOT NULL ORDER BY UPPER(param_name)"
+        ).format(equip_id, interval)
+        try:
+            r = bdq.getData(sql)
+            if not isinstance(r, pd.DataFrame): r = pd.DataFrame(r)
+            return [] if r.empty else r["param_name"].dropna().str.strip().tolist()
+        except Exception:
+            return []
+    params = _q("2 HOUR")
+    if not params:
+        params = _q("24 HOUR")
+    return params
+
+
+@st.cache_data(ttl=1800, show_spinner=False)
+def cached_fetch_steps(equip_id, chamber):
+    """ch_step 목록 조회 (30분 캐시)"""
+    if not BDQ_OK:
+        return ["DEP1_A1", "DEP2_A1", "PURGE_A1", "PUMP_A1"]
+    def _q(interval):
+        sql = (
+            "WITH base AS ("
+            "  SELECT unnest(ch_step) AS ch_step"
+            "  FROM fab.m_erdtsum_data_agg"
+            "  WHERE line_id IN ('PFBP','PFPB') AND eqp_id='{}'"
+            "    AND disp_name='{}' AND area='CVD'"
+            "    AND create_time >= now() - INTERVAL {}"
+            ") SELECT DISTINCT ch_step FROM base"
+            " WHERE ch_step IS NOT NULL ORDER BY ch_step"
+        ).format(equip_id, chamber, interval)
+        try:
+            r = bdq.getData(sql)
+            if not isinstance(r, pd.DataFrame): r = pd.DataFrame(r)
+            return [] if r.empty else r["ch_step"].dropna().str.strip().tolist()
+        except Exception:
+            return []
+    steps = _q("2 HOUR")
+    if not steps:
+        steps = _q("24 HOUR")
+    return steps
+
+
+# ============================================================
+# FDC 데이터 조회
+# ============================================================
+
+MAX_ROWS = 50_000  # 최대 조회 건수
+
+def _build_sql_base(equip_id, chamber, date_cond, param_in, ch_filter):
+    """공통 SQL 베이스 생성"""
+    return (
+        "WITH unnested AS ("
+        "  SELECT eqp_id, disp_name, step_seq, ppid, lotid, wafer_no, slot_no, recipeid,"
+        "    unnest(act_time) AS act_time,"
+        "    unnest(param_name) AS param_name,"
+        "    unnest(ch_step) AS ch_step,"
+        "    unnest(param_value) AS param_value,"
+        "    unnest(upper_spec) AS upper_spec,"
+        "    unnest(lower_spec) AS lower_spec"
+        "  FROM fab.m_erdtsum_data_agg"
+        "  WHERE line_id IN ('PFBP','PFPB') AND eqp_id='{}'"
+        "    AND disp_name='{}' AND lottype<>'-' AND area='CVD' AND {}"
+        ") SELECT * FROM unnested"
+        " WHERE UPPER(param_name) IN ({}) {}"
+    ).format(equip_id, chamber, date_cond, param_in, ch_filter)
+
+
+def _postprocess(result):
+    """조회 결과 공통 후처리 - Categorical 타입 포함 전체 정규화"""
+    # Categorical 컬럼 전부 str로 먼저 변환 (이후 fillna/astype 에러 방지)
+    for c in result.columns:
+        if hasattr(result[c], "cat"):
+            result[c] = result[c].astype(str)
+
+    result["act_time"]    = pd.to_datetime(result["act_time"], errors="coerce")
+    result["equip_id"]    = result["eqp_id"].astype(str).str.strip().str.upper()
+    result["chamber"]     = result["disp_name"].astype(str).str.strip().str.upper()
+    result["param_name"]  = result["param_name"].astype(str).str.strip().str.upper()
+    result["param_value"] = pd.to_numeric(result["param_value"], errors="coerce")
+    result["upper_spec"]  = pd.to_numeric(result["upper_spec"],  errors="coerce")
+    result["lower_spec"]  = pd.to_numeric(result["lower_spec"],  errors="coerce")
+    result = result.dropna(subset=["act_time", "param_value"])
+    result = result.drop_duplicates(
+        subset=["equip_id", "chamber", "act_time", "param_name", "ch_step"]
+    ).reset_index(drop=True)
+    return result
+
+
+def fetch_fdc(equip_id, chamber, param_names, ch_steps, change_dates, start_dt, end_dt):
+    if not BDQ_OK:
+        return pd.DataFrame()
+
+    param_in = ", ".join(["'{}'".format(p) for p in param_names])
+    start_ts = pd.Timestamp(start_dt)
+    end_ts   = pd.Timestamp(end_dt)
+
+    date_cond = "create_time >= '{}' AND create_time <= '{}'".format(
+        start_ts.strftime("%Y-%m-%d %H:%M:%S"),
+        end_ts.strftime("%Y-%m-%d %H:%M:%S"),
+    )
+    ch_filter = ""
+    if ch_steps:
+        ch_filter = "AND ch_step IN ({})".format(
+            ", ".join(["'{}'".format(s) for s in ch_steps])
+        )
+
+    # ── ① COUNT 사전 체크 ──────────────────────────────────────
+    count_sql = (
+        "WITH unnested AS ("
+        "  SELECT unnest(act_time) AS act_time,"
+        "    unnest(param_name) AS param_name,"
+        "    unnest(ch_step) AS ch_step"
+        "  FROM fab.m_erdtsum_data_agg"
+        "  WHERE line_id IN ('PFBP','PFPB') AND eqp_id='{}'"
+        "    AND disp_name='{}' AND lottype<>'-' AND area='CVD' AND {}"
+        ") SELECT COUNT(*) AS cnt FROM unnested"
+        " WHERE UPPER(param_name) IN ({}) {}"
+    ).format(equip_id, chamber, date_cond, param_in, ch_filter)
+
+    total_count = 0
+    try:
+        cnt_result = bdq.getData(count_sql)
+        if not isinstance(cnt_result, pd.DataFrame):
+            cnt_result = pd.DataFrame(cnt_result)
+        if not cnt_result.empty:
+            total_count = int(cnt_result.iloc[0, 0])
+    except Exception:
+        total_count = 0  # COUNT 실패 시 그냥 전체 조회
+
+    sampled = False
+
+    # ── ② 건수별 분기 ─────────────────────────────────────────
+    if total_count == 0 or total_count <= MAX_ROWS:
+        # 전체 조회
+        sql = _build_sql_base(equip_id, chamber, date_cond, param_in, ch_filter)
+        try:
+            result = bdq.getData(sql)
+            if not isinstance(result, pd.DataFrame):
+                result = pd.DataFrame(result)
+        except Exception as e:
+            st.error("DB 조회 오류: {}".format(e))
+            return pd.DataFrame()
+
+    else:
+        # ── ③ 5만건 초과 → Before/After 균등 샘플링 ──────────
+        sampled = True
+        valid_dates = [d for d in change_dates
+                       if start_ts <= pd.Timestamp(d) <= end_ts]
+
+        if valid_dates:
+            # 교체일 기준 Before/After 각각 절반씩
+            change_date = pd.Timestamp(valid_dates[-1])
+            half = MAX_ROWS // 2
+
+            # Before: 교체일 이전 → 최신순으로 half건
+            before_cond = (
+                "create_time >= '{}' AND create_time < '{}'".format(
+                    start_ts.strftime("%Y-%m-%d %H:%M:%S"),
+                    change_date.strftime("%Y-%m-%d %H:%M:%S"),
+                )
+            )
+            # After: 교체일 이후 → 오래된순으로 half건
+            after_cond = (
+                "create_time >= '{}' AND create_time <= '{}'".format(
+                    change_date.strftime("%Y-%m-%d %H:%M:%S"),
+                    end_ts.strftime("%Y-%m-%d %H:%M:%S"),
+                )
+            )
+
+            sql_before = (
+                _build_sql_base(equip_id, chamber, before_cond, param_in, ch_filter)
+                + " ORDER BY act_time DESC LIMIT {}".format(half)
+            )
+            sql_after = (
+                _build_sql_base(equip_id, chamber, after_cond, param_in, ch_filter)
+                + " ORDER BY act_time ASC LIMIT {}".format(half)
+            )
+
+            parts = []
+            for sql_part in [sql_before, sql_after]:
+                try:
+                    r = bdq.getData(sql_part)
+                    if not isinstance(r, pd.DataFrame):
+                        r = pd.DataFrame(r)
+                    if not r.empty:
+                        parts.append(r)
+                except Exception as e:
+                    st.warning("샘플링 조회 오류: {}".format(e))
+
+            if not parts:
+                return pd.DataFrame()
+            result = pd.concat(parts, ignore_index=True)
+
+        else:
+            # 교체일 없으면 → 전체 기간 균등하게
+            sql = (
+                _build_sql_base(equip_id, chamber, date_cond, param_in, ch_filter)
+                + " ORDER BY act_time ASC LIMIT {}".format(MAX_ROWS)
+            )
+            try:
+                result = bdq.getData(sql)
+                if not isinstance(result, pd.DataFrame):
+                    result = pd.DataFrame(result)
+            except Exception as e:
+                st.error("DB 조회 오류: {}".format(e))
+                return pd.DataFrame()
+
+    if result.empty:
+        return pd.DataFrame()
+
+    result = _postprocess(result)
+
+    # 샘플링 여부 + 원본 건수 세션에 저장 (UI에서 경고 표시용)
+    st.session_state["last_query_count"]   = total_count
+    st.session_state["last_query_sampled"] = sampled
+
+    return result
+
+
+# ============================================================
+# 분석 함수들
+# ============================================================
+
+def build_hovertemplates(df, param_name):
+    """hover 텍스트 벡터 생성 (iterrows 대신 str 연산으로 빠름)"""
+    na = "N/A"
+    def col(c):
+        if c in df.columns:
+            # astype(str) 먼저 → Categorical 타입 해제 후 fillna
+            # (fillna 먼저 하면 Categorical에 새 카테고리 추가 불가 에러 발생)
+            s = df[c].astype(str)
+            s = s.replace("nan", na).replace("<NA>", na).replace("NaT", na)
+            return s
+        return pd.Series(na, index=df.index)
+
+    val_str = df["param_value"].round(4).astype(str)
+    hover = (
+        "<b>" + col("event_label") + "</b><br>"
+        + "시간: " + col("act_time") + "<br>"
+        + param_name + ": " + val_str + "<br>"
+        + "Before/After: " + col("before_after") + "<br>"
+        + "Spec: " + col("lower_spec") + " ~ " + col("upper_spec") + "<br>"
+        + "PPID: " + col("ppid") + "<br>"
+        + "Recipe: " + col("recipeid") + "<br>"
+        + "LotID: " + col("lotid") + "<br>"
+        + "Wafer No: " + col("wafer_no") + "<br>"
+        + "Slot No: " + col("slot_no") + "<br>"
+        + "Step Seq: " + col("step_seq")
+        + "<extra></extra>"
+    )
+    return hover.tolist()
+
+
+def extract_before_after(fdc_df, history_df, equip_id, chamber, part_name, param_name, start_dt, end_dt):
+    start_ts = pd.Timestamp(start_dt)
+    end_ts   = pd.Timestamp(end_dt)
+
+    fdc = fdc_df[fdc_df["param_name"] == param_name.upper()].copy()
+    if fdc.empty:
+        return pd.DataFrame()
+
+    # Categorical 타입 컬럼 전부 str로 변환 (새 값 할당 시 에러 방지)
+    for col in fdc.columns:
+        if hasattr(fdc[col], "cat"):
+            fdc[col] = fdc[col].astype(str)
+
+    # act_time datetime64 강제 변환
+    fdc["act_time"] = pd.to_datetime(fdc["act_time"], errors="coerce")
+    fdc = fdc.dropna(subset=["act_time"])
+
+    # 교체 이력 조회
+    hist = pd.DataFrame()
+    if history_df is not None and not history_df.empty:
+        hist = history_df[
+            (history_df["equip_id"]  == equip_id.upper()) &
+            (history_df["chamber"]   == chamber.upper()) &
+            (history_df["part_name"] == part_name.upper())
+        ].copy()
+        hist["change_date"] = pd.to_datetime(hist["change_date"], errors="coerce")
+        hist = hist[
+            (hist["change_date"] >= start_ts) &
+            (hist["change_date"] <= end_ts)
+        ].sort_values("change_date").reset_index(drop=True)
+
+    # 교체 이력 없으면 → 전체 기간 데이터 표시
+    if hist.empty:
+        fdc = fdc[
+            (fdc["act_time"] >= start_ts) &
+            (fdc["act_time"] <= end_ts)
+        ].copy()
+        fdc["change_date"]  = pd.NaT
+        fdc["before_after"] = "전체"
+        fdc["event_label"]  = "{}-{} {} (교체이력없음)".format(equip_id, chamber, param_name)
+        return fdc
+
+    # 교체 이력 있으면 → Before/After 분류 (전체 기간 사용)
+    # 교체날짜가 여러 개면 가장 최근 교체일 기준으로만 분류
+    change_date = hist.iloc[-1]["change_date"]  # 가장 최근 교체일
+    window = fdc[
+        (fdc["act_time"] >= start_ts) &
+        (fdc["act_time"] <= end_ts)
+    ].copy()
+    if window.empty:
+        return pd.DataFrame()
+    window["change_date"]  = change_date
+    window["before_after"] = (window["act_time"] >= change_date).map(
+        {True: "After", False: "Before"}
+    )
+    window["event_label"] = "{}-{} {} ({})".format(
+        equip_id, chamber,
+        hist.iloc[-1]["part_name"],
+        change_date.strftime("%Y.%m.%d"),
+    )
+    return window
+
+
+def mark_out_of_spec(df):
+    df = df.copy()
+    df["out_of_spec"] = False
+    df.loc[df["upper_spec"].notna() & (df["param_value"] > df["upper_spec"]), "out_of_spec"] = True
+    df.loc[df["lower_spec"].notna() & (df["param_value"] < df["lower_spec"]), "out_of_spec"] = True
+    return df
+
+
+def calc_statistics(df):
+    stats = {}
+    for event_label, group in df.groupby("event_label"):
+        stats[event_label] = {}
+        ba_list = group["before_after"].unique().tolist()  # group 기준으로 수정
+        for ba in ba_list:
+            data = group[group["before_after"] == ba]["param_value"].dropna()
+            if data.empty:
+                stats[event_label][ba] = None
+                continue
+            oos = int(group[(group["before_after"] == ba) & (group["out_of_spec"])]["param_value"].count())
+            stats[event_label][ba] = {
+                "mean":  round(data.mean(), 4),
+                "std":   round(data.std(),  4) if len(data) > 1 else 0.0,
+                "min":   round(data.min(),  4),
+                "max":   round(data.max(),  4),
+                "count": len(data),
+                "oos":   oos,
+            }
+        b = stats[event_label].get("Before")
+        a = stats[event_label].get("After")
+        if b is not None and a is not None and abs(b["mean"]) > 1e-10:
+            stats[event_label]["change_rate"] = round(
+                (a["mean"] - b["mean"]) / abs(b["mean"]) * 100, 2
+            )
+        else:
+            stats[event_label]["change_rate"] = None
+    return stats
+
+
+def to_timestamp_ms(dt):
+    return int(pd.Timestamp(dt).timestamp() * 1000)
+
+
+# ============================================================
+# 차트 공통 설정
+# ============================================================
+
+PLOTLY_CONFIG = {
+    "scrollZoom": True,
+    "displayModeBar": True,
+    "modeBarButtonsToRemove": ["select2d", "lasso2d", "pan2d"],
+    "toImageButtonOptions": {"format": "png", "scale": 2},
+}
+
+def base_layout(title, height=550):
+    return dict(
+        title=dict(text=title, font=dict(size=13, color="#2D3748"), x=0),
+        hovermode="closest",
+        dragmode="zoom",
+        height=height,
+        plot_bgcolor="#FFFFFF",
+        paper_bgcolor="#FFFFFF",
+        font=dict(color="#2D3748", size=12, family="Noto Sans KR, sans-serif"),
+        legend=dict(
+            x=1.02, y=1.0,
+            font=dict(size=12, color="#2D3748"),
+            bgcolor="rgba(255,255,255,0.95)",
+            bordercolor="#E2E8F0",
+            borderwidth=1,
+            itemclick="toggle",
+            itemdoubleclick="toggleothers",
+        ),
+        xaxis=dict(
+            gridcolor="#EDF2F7",
+            linecolor="#E2E8F0",
+            tickfont=dict(size=11, color="#4A5568"),
+            title_font=dict(size=13, color="#2D3748"),
+            rangeselector=dict(
+                buttons=[
+                    dict(count=1,  label="1일",  step="day",   stepmode="backward"),
+                    dict(count=7,  label="1주",  step="day",   stepmode="backward"),
+                    dict(count=1,  label="1달",  step="month", stepmode="backward"),
+                    dict(count=3,  label="3달",  step="month", stepmode="backward"),
+                    dict(step="all", label="전체"),
+                ],
+                bgcolor="#F7FAFC",
+                activecolor="#1565C0",
+                font=dict(size=11, color="#2D3748"),
+                bordercolor="#E2E8F0",
+            ),
+            rangeslider_visible=False,
+            showgrid=True,
+            zeroline=False,
+        ),
+        yaxis=dict(
+            gridcolor="#EDF2F7",
+            linecolor="#E2E8F0",
+            tickfont=dict(size=11, color="#4A5568"),
+            title_font=dict(size=13, color="#2D3748"),
+            showgrid=True,
+            zeroline=False,
+        ),
+        margin=dict(l=70, r=160, t=60, b=60),
+        hoverlabel=dict(
+            bgcolor="#FFFFFF",
+            bordercolor="#E2E8F0",
+            font=dict(size=12, color="#2D3748"),
+        ),
+    )
+
+
+def add_spec_lines(fig, df, row=None, col=None):
+    upper = df["upper_spec"].dropna()
+    lower = df["lower_spec"].dropna()
+    # add_hline은 row, col 둘 다 있어야 subplot에 제대로 적용됨
+    kwargs = {"row": row, "col": col} if row is not None and col is not None else {}
+    if not upper.empty:
+        uv = round(upper.mean(), 4)
+        fig.add_hline(y=uv, line_dash="dot", line_color=COLOR_SPEC, line_width=1.5,
+                      annotation_text="USL:{}".format(uv), annotation_position="right", **kwargs)
+    if not lower.empty:
+        lv = round(lower.mean(), 4)
+        fig.add_hline(y=lv, line_dash="dot", line_color=COLOR_SPEC, line_width=1.5,
+                      annotation_text="LSL:{}".format(lv), annotation_position="right", **kwargs)
+
+
+def add_change_vlines(fig, change_dates, row=None, col=None):
+    """변경점 세로선 - 점선 + 변경점 라벨"""
+    kwargs = {"row": row} if row is not None else {}
+    for cd in change_dates:
+        if pd.notna(cd):
+            fig.add_vline(
+                x=to_timestamp_ms(cd),
+                line_dash="dash",
+                line_color=COLOR_CHANGE,
+                line_width=2.5,
+                annotation_text="<b>▼ 변경점</b><br>{}".format(
+                    pd.Timestamp(cd).strftime("%Y.%m.%d")
+                ),
+                annotation_position="top",
+                annotation_font=dict(size=11, color=COLOR_CHANGE),
+                annotation_bgcolor="rgba(255,255,255,0.85)",
+                annotation_bordercolor=COLOR_CHANGE,
+                annotation_borderwidth=1,
+                **kwargs
+            )
+
+
+# ============================================================
+# 차트 함수 10종
+# ============================================================
+
+BA_COLORS = {"Before": COLOR_BEFORE, "After": COLOR_AFTER, "전체": COLOR_BEFORE}
+
+
+def _insert_gaps(x_list, y_list, hover_list, gap_minutes=30):
+    """
+    act_time 간격이 gap_minutes 이상이면 None 삽입 → 선 자동 끊김
+    x_list: datetime 리스트, y_list: 값 리스트, hover_list: hover 리스트
+    """
+    if len(x_list) < 2:
+        return x_list, y_list, hover_list
+
+    new_x, new_y, new_h = [], [], []
+    gap = pd.Timedelta(minutes=gap_minutes)
+
+    for i, (x, y, h) in enumerate(zip(x_list, y_list, hover_list)):
+        if i > 0:
+            prev_x = pd.Timestamp(x_list[i - 1])
+            curr_x = pd.Timestamp(x)
+            if (curr_x - prev_x) >= gap:
+                # gap 삽입 → 선 끊김
+                new_x.append(None)
+                new_y.append(None)
+                new_h.append("<extra></extra>")
+        new_x.append(x)
+        new_y.append(y)
+        new_h.append(h)
+
+    return new_x, new_y, new_h
+
+
+def make_segmented_line(sdf, param, step_name, change_dates, legend_shown):
+    """
+    Before/After 구간을 각각 끊어서 trace 생성
+    - 30분 이상 gap → 선 자동 끊김 (None 삽입)
+    - Before: 파랑, After: 빨강
+    - legend: DEP1_A1(Before) 형식
+    - OOS: 보라 X 마커
+    """
+    traces = []
+
+    for ba, color in [("Before", COLOR_BEFORE), ("After", COLOR_AFTER), ("전체", COLOR_BEFORE)]:
+        sub = sdf[sdf["before_after"] == ba].sort_values("act_time")
+        if sub.empty:
+            continue
+
+        in_s  = sub[~sub["out_of_spec"]]
+        out_s = sub[sub["out_of_spec"]]
+
+        if ba == "전체":
+            legend_name = step_name if step_name != "ALL" else "전체"
+        else:
+            legend_name = "{} ({})".format(step_name, ba) if step_name != "ALL" else ba
+
+        show_lg = legend_name not in legend_shown
+
+        if not in_s.empty:
+            x_raw   = in_s["act_time"].tolist()
+            y_raw   = in_s["param_value"].tolist()
+            h_raw   = build_hovertemplates(in_s, param)
+            # 30분 이상 gap → None 삽입으로 선 끊기
+            x_gap, y_gap, h_gap = _insert_gaps(x_raw, y_raw, h_raw, gap_minutes=30)
+            traces.append({
+                "x": x_gap,
+                "y": y_gap,
+                "color": color,
+                "name": legend_name,
+                "showlegend": show_lg,
+                "mode": "lines+markers",
+                "hover": h_gap,
+                "marker_size": 4,
+                "is_oos": False,
+            })
+            legend_shown.add(legend_name)
+
+        if not out_s.empty:
+            oos_name = "{} OOS".format(step_name) if step_name != "ALL" else "OOS"
+            show_oos = oos_name not in legend_shown
+            traces.append({
+                "x": out_s["act_time"].tolist(),
+                "y": out_s["param_value"].tolist(),
+                "color": COLOR_OUT_SPEC,
+                "name": oos_name,
+                "showlegend": show_oos,
+                "mode": "markers",
+                "hover": build_hovertemplates(out_s, param),
+                "marker_size": 9,
+                "is_oos": True,
+            })
+            legend_shown.add(oos_name)
+
+    return traces
+
+
+def chart_line(df, param, steps, change_dates, title):
+    """오버레이 고정: 선택된 step을 한 그래프에 겹쳐서 표시"""
+    legend_shown = set()
+    fig = go.Figure()
+
+    for step in steps:
+        sdf = df[df["ch_step"] == step] if step != "ALL" else df
+        step_name = step if step != "ALL" else "ALL"
+        traces = make_segmented_line(sdf, param, step_name, change_dates, legend_shown)
+        for t in traces:
+            if t["is_oos"]:
+                fig.add_trace(go.Scatter(
+                    x=t["x"], y=t["y"],
+                    mode=t["mode"], name=t["name"],
+                    showlegend=t["showlegend"],
+                    marker=dict(size=t["marker_size"], color=t["color"], symbol="x"),
+                    hovertemplate=t["hover"],
+                ))
+            else:
+                fig.add_trace(go.Scatter(
+                    x=t["x"], y=t["y"],
+                    mode=t["mode"], name=t["name"],
+                    showlegend=t["showlegend"],
+                    line=dict(color=t["color"], width=2),
+                    marker=dict(size=t["marker_size"], color=t["color"]),
+                    hovertemplate=t["hover"],
+                    connectgaps=False,
+                ))
+
+    add_spec_lines(fig, df)
+    add_change_vlines(fig, change_dates)
+    layout = base_layout(title)
+    layout["xaxis"]["title"] = "act_time"
+    layout["yaxis"]["title"] = param
+    fig.update_layout(**layout)
+    return fig
+
+
+def chart_scatter(df, param, steps, change_dates, title):
+    """Scatter: step별 Before/After 색 구분"""
+    legend_shown = set()
+    fig = go.Figure()
+
+    for step in steps:
+        sdf = df[df["ch_step"] == step] if step != "ALL" else df
+        step_name = step if step != "ALL" else "ALL"
+        ba_list = [b for b in ["Before", "After", "전체"] if b in sdf["before_after"].unique()]
+
+        for ba in ba_list:
+            color = BA_COLORS.get(ba, COLOR_BEFORE)
+            sub   = sdf[sdf["before_after"] == ba]
+            in_s  = sub[~sub["out_of_spec"]]
+            out_s = sub[sub["out_of_spec"]]
+
+            if ba == "전체":
+                legend_name = step_name if step_name != "ALL" else "전체"
+            else:
+                legend_name = "{} ({})".format(step_name, ba) if step_name != "ALL" else ba
+            oos_name = "{} OOS".format(step_name) if step_name != "ALL" else "OOS"
+
+            if not in_s.empty:
+                fig.add_trace(go.Scatter(
+                    x=in_s["act_time"], y=in_s["param_value"],
+                    mode="markers", name=legend_name,
+                    showlegend=legend_name not in legend_shown,
+                    marker=dict(size=6, color=color, opacity=0.75),
+                    hovertemplate=build_hovertemplates(in_s, param),
+                ))
+                legend_shown.add(legend_name)
+            if not out_s.empty:
+                fig.add_trace(go.Scatter(
+                    x=out_s["act_time"], y=out_s["param_value"],
+                    mode="markers", name=oos_name,
+                    showlegend=oos_name not in legend_shown,
+                    marker=dict(size=10, color=COLOR_OUT_SPEC, symbol="x"),
+                    hovertemplate=build_hovertemplates(out_s, param),
+                ))
+                legend_shown.add(oos_name)
+
+    add_spec_lines(fig, df)
+    add_change_vlines(fig, change_dates)
+    layout = base_layout(title)
+    layout["xaxis"]["title"] = "act_time"
+    layout["yaxis"]["title"] = param
+    fig.update_layout(**layout)
+    return fig
+
+
+def chart_box(df, param, title):
+    ba_list = [b for b in ["Before", "After", "전체"] if b in df["before_after"].unique()]
+    fig = go.Figure()
+    for ba in ba_list:
+        color = BA_COLORS.get(ba, COLOR_BEFORE)
+        data  = df[df["before_after"] == ba]["param_value"].dropna()
+        if not data.empty:
+            fig.add_trace(go.Box(y=data, name=ba, marker_color=color, boxmean="sd",
+                hovertemplate=param + ": %{y:.4f}<extra>" + ba + "</extra>"))
+    upper = df["upper_spec"].dropna()
+    lower = df["lower_spec"].dropna()
+    if not upper.empty:
+        fig.add_hline(y=upper.mean(), line_dash="dot", line_color=COLOR_SPEC, line_width=1.5,
+                      annotation_text="USL:{}".format(round(upper.mean(),4)), annotation_position="right")
+    if not lower.empty:
+        fig.add_hline(y=lower.mean(), line_dash="dot", line_color=COLOR_SPEC, line_width=1.5,
+                      annotation_text="LSL:{}".format(round(lower.mean(),4)), annotation_position="right")
+    layout = base_layout(title)
+    layout["xaxis"] = dict(gridcolor="#EDF2F7", linecolor="#E2E8F0",
+                           tickfont=dict(size=12, color="#4A5568"))
+    layout["yaxis"]["title"] = param
+    fig.update_layout(**layout)
+    return fig
+
+
+def chart_violin(df, param, title):
+    ba_list = [b for b in ["Before", "After", "전체"] if b in df["before_after"].unique()]
+    fig = go.Figure()
+    for ba in ba_list:
+        color = BA_COLORS.get(ba, COLOR_BEFORE)
+        data  = df[df["before_after"] == ba]["param_value"].dropna()
+        if not data.empty:
+            fig.add_trace(go.Violin(y=data, name=ba, fillcolor=color,
+                line_color=color, meanline_visible=True, opacity=0.7))
+    upper = df["upper_spec"].dropna()
+    lower = df["lower_spec"].dropna()
+    if not upper.empty:
+        fig.add_hline(y=upper.mean(), line_dash="dot", line_color=COLOR_SPEC, line_width=1.5,
+                      annotation_text="USL", annotation_position="right")
+    if not lower.empty:
+        fig.add_hline(y=lower.mean(), line_dash="dot", line_color=COLOR_SPEC, line_width=1.5,
+                      annotation_text="LSL", annotation_position="right")
+    layout = base_layout(title)
+    layout["xaxis"] = dict(gridcolor="#EDF2F7", linecolor="#E2E8F0",
+                           tickfont=dict(size=12, color="#4A5568"))
+    layout["yaxis"]["title"] = param
+    fig.update_layout(**layout)
+    return fig
+
+
+def chart_histogram(df, param, title):
+    ba_list = [b for b in ["Before", "After", "전체"] if b in df["before_after"].unique()]
+    fig = go.Figure()
+    for ba in ba_list:
+        color = BA_COLORS.get(ba, COLOR_BEFORE)
+        data  = df[df["before_after"] == ba]["param_value"].dropna()
+        if not data.empty:
+            fig.add_trace(go.Histogram(x=data, name=ba, marker_color=color, opacity=0.6, nbinsx=30))
+    upper = df["upper_spec"].dropna()
+    lower = df["lower_spec"].dropna()
+    if not upper.empty:
+        fig.add_vline(x=upper.mean(), line_dash="dot", line_color=COLOR_SPEC, line_width=1.5,
+                      annotation_text="USL", annotation_position="top right")
+    if not lower.empty:
+        fig.add_vline(x=lower.mean(), line_dash="dot", line_color=COLOR_SPEC, line_width=1.5,
+                      annotation_text="LSL", annotation_position="top left")
+    layout = base_layout(title)
+    layout["xaxis"] = dict(
+        title=param,
+        gridcolor="#EDF2F7", linecolor="#E2E8F0",
+        tickfont=dict(size=11, color="#4A5568"),
+    )
+    layout["yaxis"]["title"] = "Count"
+    fig.update_layout(**{**layout, "barmode": "overlay"})
+    return fig
+
+
+def chart_bar(df, param, title):
+    ba_list = [b for b in ["Before", "After", "전체"] if b in df["before_after"].unique()]
+    fig = go.Figure()
+    for ba in ba_list:
+        color = BA_COLORS.get(ba, COLOR_BEFORE)
+        sub   = df[df["before_after"] == ba]
+        if sub.empty: continue
+        means = sub.groupby("event_label")["param_value"].mean().reset_index()
+        fig.add_trace(go.Bar(x=means["event_label"], y=means["param_value"],
+            name=ba, marker_color=color, opacity=0.85,
+            hovertemplate="이벤트: %{x}<br>평균 " + param + ": %{y:.4f}<extra>" + ba + "</extra>"))
+    upper = df["upper_spec"].dropna()
+    lower = df["lower_spec"].dropna()
+    if not upper.empty:
+        fig.add_hline(y=upper.mean(), line_dash="dot", line_color=COLOR_SPEC, line_width=1.5,
+                      annotation_text="USL", annotation_position="right")
+    if not lower.empty:
+        fig.add_hline(y=lower.mean(), line_dash="dot", line_color=COLOR_SPEC, line_width=1.5,
+                      annotation_text="LSL", annotation_position="right")
+    layout = base_layout(title)
+    layout["xaxis"] = dict(
+        gridcolor="#EDF2F7", linecolor="#E2E8F0",
+        tickfont=dict(size=11, color="#4A5568"), tickangle=-20,
+    )
+    layout["yaxis"]["title"] = "평균 {}".format(param)
+    fig.update_layout(**{**layout, "barmode": "group"})
+    return fig
+
+
+def chart_heatmap(df, param, title):
+    df2 = df.copy()
+    df2["hour"] = df2["act_time"].dt.strftime("%Y-%m-%d %H:00")
+    try:
+        pivot = df2.pivot_table(values="param_value", index="before_after",
+                                columns="hour", aggfunc="mean")
+    except Exception:
+        return None
+    if pivot.empty or pivot.shape[1] == 0:
+        return None
+    fig = go.Figure(go.Heatmap(
+        z=pivot.values, x=pivot.columns.tolist(), y=pivot.index.tolist(),
+        colorscale="RdBu_r",
+        hovertemplate="시간: %{x}<br>Before/After: %{y}<br>평균: %{z:.4f}<extra></extra>",
+    ))
+    layout = base_layout(title)
+    # heatmap은 x축이 문자열이라 rangeselector 제거
+    layout["xaxis"] = dict(
+        title="시간대",
+        gridcolor="#EDF2F7",
+        linecolor="#E2E8F0",
+        tickfont=dict(size=10, color="#4A5568"),
+        tickangle=-45,
+    )
+    layout["yaxis"]["title"] = "Before / After"
+    fig.update_layout(**layout)
+    return fig
+
+
+def chart_bubble(df, param, change_dates, title):
+    ba_list = [b for b in ["Before", "After", "전체"] if b in df["before_after"].unique()]
+    fig = go.Figure()
+    for ba in ba_list:
+        color = BA_COLORS.get(ba, COLOR_BEFORE)
+        sub   = df[df["before_after"] == ba].copy()
+        if sub.empty: continue
+        sub["density"] = sub.groupby("act_time")["param_value"].transform("count")
+        sizes = (sub["density"] * 5).clip(upper=50).tolist()
+        fig.add_trace(go.Scatter(x=sub["act_time"], y=sub["param_value"],
+            mode="markers", name=ba,
+            marker=dict(size=sizes, color=color, opacity=0.6, sizemode="area", sizemin=5),
+            hovertemplate=build_hovertemplates(sub, param)))
+    add_spec_lines(fig, df)
+    add_change_vlines(fig, change_dates)
+    layout = base_layout(title)
+    layout["xaxis"]["title"] = "act_time"
+    layout["yaxis"]["title"] = param
+    fig.update_layout(**layout)
+    return fig
+
+
+def chart_control(df, param, change_dates, title):
+    ba_list = [b for b in ["Before", "After", "전체"] if b in df["before_after"].unique()]
+    legend_shown = set()
+    fig = go.Figure()
+    for ba in ba_list:
+        color = BA_COLORS.get(ba, COLOR_BEFORE)
+        sub   = df[df["before_after"] == ba].sort_values("act_time")
+        if sub.empty: continue
+        mean = sub["param_value"].mean()
+        std  = sub["param_value"].std()
+        std  = 0.0 if (pd.isna(std) or std == 0) else std
+        in_s  = sub[~sub["out_of_spec"]]
+        out_s = sub[sub["out_of_spec"]]
+        nin   = "{} In Spec".format(ba)
+        noos  = "{} OOS".format(ba)
+        if not in_s.empty:
+            fig.add_trace(go.Scatter(x=in_s["act_time"], y=in_s["param_value"],
+                mode="lines+markers", name=nin, legendgroup=ba,
+                showlegend=(nin not in legend_shown),
+                line=dict(color=color, width=1.5), marker=dict(size=4, color=color),
+                hovertemplate=build_hovertemplates(in_s, param)))
+            legend_shown.add(nin)
+        if not out_s.empty:
+            fig.add_trace(go.Scatter(x=out_s["act_time"], y=out_s["param_value"],
+                mode="markers", name=noos, legendgroup=ba,
+                showlegend=(noos not in legend_shown),
+                marker=dict(size=10, color=COLOR_OUT_SPEC, symbol="x"),
+                hovertemplate=build_hovertemplates(out_s, param)))
+            legend_shown.add(noos)
+        for y_val, label, dash in [
+            (mean,           "Mean({})={:.3f}".format(ba, mean),      "dash"),
+            (mean + 3 * std, "+3σ({})={:.3f}".format(ba, mean+3*std), "dot"),
+            (mean - 3 * std, "-3σ({})={:.3f}".format(ba, mean-3*std), "dot"),
+        ]:
+            # std=0이면 ±3σ가 mean과 겹치므로 mean만 표시
+            if std == 0 and y_val != mean:
+                continue
+            fig.add_hline(y=y_val, line_dash=dash, line_color=color, line_width=1,
+                          annotation_text=label, annotation_position="right")
+    add_spec_lines(fig, df)
+    add_change_vlines(fig, change_dates)
+    layout = base_layout(title)
+    layout["xaxis"]["title"] = "act_time"
+    layout["yaxis"]["title"] = param
+    fig.update_layout(**layout)
+    return fig
+
+
+def chart_change_rate(df, param, title):
+    events, rates, colors = [], [], []
+    for event_label, group in df.groupby("event_label"):
+        b = group[group["before_after"] == "Before"]["param_value"].mean()
+        a = group[group["before_after"] == "After"]["param_value"].mean()
+        if pd.notna(b) and pd.notna(a) and abs(b) > 1e-10:
+            rate = (a - b) / abs(b) * 100
+            events.append(event_label)
+            rates.append(round(rate, 2))
+            colors.append(COLOR_AFTER if rate > 0 else COLOR_BEFORE)
+    if not events:
+        return None
+    fig = go.Figure(go.Bar(
+        x=events, y=rates, marker_color=colors, opacity=0.85,
+        text=["{}%".format(r) for r in rates], textposition="outside",
+        hovertemplate="이벤트: %{x}<br>변화율: %{y:.2f}%<extra></extra>",
+    ))
+    fig.add_hline(y=0, line_color="#8B949E", line_width=1)
+    layout = base_layout(title)
+    layout["xaxis"] = dict(
+        gridcolor="#EDF2F7", linecolor="#E2E8F0",
+        tickfont=dict(size=11, color="#4A5568"), tickangle=-25,
+    )
+    layout["yaxis"]["title"] = "변화율 (%)"
+    fig.update_layout(**layout)
+    return fig
+
+
+CHART_FUNCS = {
+    "📈 Line Plot":       "line",
+    "⚬ Scatter Plot":    "scatter",
+    "📦 Box Plot":        "box",
+    "🎻 Violin Plot":     "violin",
+    "📊 Histogram":       "histogram",
+    "📉 Bar Chart":       "bar",
+    "🌡 Heatmap":         "heatmap",
+    "🫧 Bubble Chart":    "bubble",
+    "🎯 Control Chart":   "control",
+    "📐 변화율 Bar":      "change_rate",
+}
+
+# ============================================================
+# HTML 저장
+# ============================================================
+
+def save_html(fig, title):
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    date_str = datetime.now().strftime("%Y%m%d_%H%M")
+    safe = (title.replace(" ", "_").replace("/", "-").replace(":", "-")
+            .replace("[","").replace("]","").replace("~","-"))
+    path = os.path.join(OUTPUT_DIR, "{}_{}.html".format(safe, date_str))
+    fig.write_html(path, config=PLOTLY_CONFIG)
+    return path
+
+
+# ============================================================
+# 통계 카드 렌더
+# ============================================================
+
+def render_stat_cards(stats):
+    for event_label, s in stats.items():
+        st.markdown("**{}**".format(event_label))
+        b = s.get("Before") if s.get("Before") is not None else s.get("전체")
+        a = s.get("After")
+        cols = st.columns(4)
+        with cols[0]:
+            val = b["mean"] if b else "N/A"
+            st.markdown("""<div class="stat-card">
+                <div class="stat-label">교체 전 AVG</div>
+                <div class="stat-value blue">{}</div>
+                <div class="stat-sub">std {} · N={}</div>
+            </div>""".format(
+                val,
+                b["std"] if b else "-",
+                b["count"] if b else "-",
+            ), unsafe_allow_html=True)
+        with cols[1]:
+            val = a["mean"] if a else "N/A"
+            st.markdown("""<div class="stat-card">
+                <div class="stat-label">교체 후 AVG</div>
+                <div class="stat-value red">{}</div>
+                <div class="stat-sub">std {} · N={}</div>
+            </div>""".format(
+                val,
+                a["std"] if a else "-",
+                a["count"] if a else "-",
+            ), unsafe_allow_html=True)
+        with cols[2]:
+            cr = s.get("change_rate")
+            if cr is not None:
+                arrow = "▲" if cr > 0 else "▼"
+                cls   = "green" if cr > 0 else "red"
+                val   = "{} {:.2f}%".format(arrow, abs(cr))
+            else:
+                cls = "yellow"; val = "N/A"
+            st.markdown("""<div class="stat-card">
+                <div class="stat-label">변화율</div>
+                <div class="stat-value {}">{}</div>
+                <div class="stat-sub">교체 후 - 교체 전</div>
+            </div>""".format(cls, val), unsafe_allow_html=True)
+        with cols[3]:
+            b_cnt = b["count"] if b else 0
+            a_cnt = a["count"] if a else 0
+            total = b_cnt + a_cnt
+            st.markdown("""<div class="stat-card">
+                <div class="stat-label">FDC 데이터 건수</div>
+                <div class="stat-value yellow">{}건</div>
+                <div class="stat-sub">교체 전 {} · 교체 후 {}</div>
+            </div>""".format(total, b_cnt, a_cnt), unsafe_allow_html=True)
+
+
+# ============================================================
+# 메인 앱
+# ============================================================
+
+def main():
+    # 헤더
+    st.markdown("""
+    <div class="main-header">
+      <div>
+        <div class="main-header-title">⚗ PHDP FDC Analyzer</div>
+        <div class="main-header-sub">파트 교체 전/후 FDC 데이터 분석 시스템 · Samsung DS CVD</div>
+      </div>
+      <div class="main-header-badge">v3.0</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ── 사이드바 ──────────────────────────────────────────────
+    with st.sidebar:
+        st.markdown("## ⚗ 분석 설정")
+
+        # Excel 로드 (파일 수정시간 기반 → 업데이트 즉시 반영)
+        st.markdown('<div class="sidebar-section">설비 · 챔버 · 파트</div>', unsafe_allow_html=True)
+        _mtime = os.path.getmtime(EXCEL_PATH) if os.path.exists(EXCEL_PATH) else 0
+        with st.spinner("이력 로드 중..."):
+            history_df = cached_load_excel(EXCEL_PATH, _mtime)
+
+        if history_df.empty:
+            st.warning("Excel 이력 없음 (더미 모드)")
+            equip_list = ["TAHP851","TAHP852","TAHP853","TAHP854","TAHP855","TAHP856","TAHP857"]
+        else:
+            equip_list = sorted(history_df["equip_id"].unique())
+
+        # selectbox를 session_state로 고정 → 탭 전환 시 값 유지
+        if "sel_equip" not in st.session_state:
+            st.session_state["sel_equip"] = "TAHP854" if "TAHP854" in equip_list else equip_list[0]
+        if st.session_state["sel_equip"] not in equip_list:
+            st.session_state["sel_equip"] = equip_list[0]
+
+        equip_id = st.selectbox(
+            "설비", equip_list,
+            index=equip_list.index(st.session_state["sel_equip"]),
+            key="sb_equip",
+        )
+        st.session_state["sel_equip"] = equip_id
+
+        if not history_df.empty:
+            chamber_list = sorted(history_df[history_df["equip_id"] == equip_id]["chamber"].unique())
+        else:
+            chamber_list = ["A","B","C","D"]
+
+        if "sel_chamber" not in st.session_state or st.session_state["sel_chamber"] not in chamber_list:
+            st.session_state["sel_chamber"] = chamber_list[0]
+
+        chamber = st.selectbox(
+            "챔버", chamber_list,
+            index=chamber_list.index(st.session_state["sel_chamber"]),
+            key="sb_chamber",
+        )
+        st.session_state["sel_chamber"] = chamber
+
+        if not history_df.empty:
+            part_df   = history_df[
+                (history_df["equip_id"] == equip_id) &
+                (history_df["chamber"]  == chamber)
+            ]
+            part_list = sorted(part_df["part_name"].unique())
+        else:
+            part_list = ["CBM","ESC","RING"]
+
+        if "sel_part" not in st.session_state or st.session_state["sel_part"] not in part_list:
+            st.session_state["sel_part"] = part_list[0]
+
+        part_name = st.selectbox(
+            "파트", part_list,
+            index=part_list.index(st.session_state["sel_part"]),
+            key="sb_part",
+        )
+        st.session_state["sel_part"] = part_name
+
+        # 설비/챔버/파트 바뀌면 이전 결과 클리어
+        current_key = "{}::{}::{}".format(equip_id, chamber, part_name)
+        if st.session_state.get("last_result_key") != current_key:
+            st.session_state.pop("fdc_result", None)
+            st.session_state.pop("last_query_count", None)
+            st.session_state.pop("last_query_sampled", None)
+            st.session_state["last_result_key"] = current_key
+
+        # 교체 날짜 표시
+        if not history_df.empty and part_name:
+            dates = sorted(history_df[
+                (history_df["equip_id"]  == equip_id) &
+                (history_df["chamber"]   == chamber) &
+                (history_df["part_name"] == part_name)
+            ]["change_date"].dropna().tolist())
+            if dates:
+                date_strs = ", ".join([d.strftime("%Y.%m.%d") for d in dates])
+                st.markdown('<div class="info-box">🔧 교체일: {}</div>'.format(date_strs), unsafe_allow_html=True)
+
+        # 조회 기간
+        st.markdown('<div class="sidebar-section">📅 조회 기간</div>', unsafe_allow_html=True)
+
+        # 교체일 목록 가져오기 (버튼에 활용)
+        change_dates_all = []
+        if not history_df.empty and part_name:
+            change_dates_all = sorted(history_df[
+                (history_df["equip_id"]  == equip_id) &
+                (history_df["chamber"]   == chamber) &
+                (history_df["part_name"] == part_name)
+            ]["change_date"].dropna().tolist())
+
+        # 초기값 설정
+        if "dt_start" not in st.session_state:
+            st.session_state["dt_start"] = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d 00:00:00")
+        if "dt_end" not in st.session_state:
+            st.session_state["dt_end"] = datetime.now().strftime("%Y-%m-%d 23:59:59")
+        if "dt_input_ver" not in st.session_state:
+            st.session_state["dt_input_ver"] = 0  # key 버전 → 버튼 클릭 시 증가해서 위젯 강제 재렌더
+
+        def _apply_date(days):
+            """빠른날짜 버튼 공통 처리"""
+            if change_dates_all:
+                latest = pd.Timestamp(change_dates_all[-1])
+                st.session_state["dt_start"] = (latest - timedelta(days=days)).strftime("%Y-%m-%d 00:00:00")
+                st.session_state["dt_end"]   = (latest + timedelta(days=days)).strftime("%Y-%m-%d 23:59:59")
+            else:
+                st.session_state["dt_start"] = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d 00:00:00")
+                st.session_state["dt_end"]   = datetime.now().strftime("%Y-%m-%d 23:59:59")
+            st.session_state["dt_input_ver"] += 1  # text_input key 변경 → 강제 재렌더
+
+        # 빠른 날짜 버튼 (교체일 기준)
+        st.markdown("**빠른 설정** (교체일 기준 전/후)")
+        row1 = st.columns(5)
+        for i, (label, days) in enumerate([("1일",1),("3일",3),("5일",5),("7일",7),("10일",10)]):
+            with row1[i]:
+                if st.button(label, key="quick_{}".format(i), use_container_width=True):
+                    _apply_date(days)
+                    st.rerun()
+
+        row2 = st.columns(5)
+        for i, (label, days) in enumerate([("30일",30),("90일",90),("1년",365),("2년",730),("3년",1095)]):
+            with row2[i]:
+                if st.button(label, key="quick2_{}".format(i), use_container_width=True):
+                    _apply_date(days)
+                    st.rerun()
+
+        # datetime 직접 입력 (key에 버전 포함 → 버튼 클릭 시 강제 재렌더)
+        ver = st.session_state["dt_input_ver"]
+        dt_start_str = st.text_input(
+            "시작일시",
+            value=st.session_state["dt_start"],
+            key="input_dt_start_{}".format(ver),
+            placeholder="2026-01-01 08:00:00",
+            help="형식: YYYY-MM-DD HH:MM:SS",
+        )
+        dt_end_str = st.text_input(
+            "종료일시",
+            value=st.session_state["dt_end"],
+            key="input_dt_end_{}".format(ver),
+            placeholder="2026-03-31 23:59:59",
+            help="형식: YYYY-MM-DD HH:MM:SS",
+        )
+
+        # 직접 입력한 경우 session_state 동기화
+        st.session_state["dt_start"] = dt_start_str
+        st.session_state["dt_end"]   = dt_end_str
+
+        # datetime 파싱
+        def parse_dt(s, default):
+            for fmt in ["%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d"]:
+                try:
+                    return datetime.strptime(s.strip(), fmt)
+                except ValueError:
+                    continue
+            return default
+
+        start_dt = parse_dt(dt_start_str, datetime.now() - timedelta(days=30))
+        end_dt   = parse_dt(dt_end_str,   datetime.now())
+
+        # 날짜 미리보기
+        if start_dt < end_dt:
+            diff = end_dt - start_dt
+            cd_in_range = [d for d in change_dates_all
+                           if pd.Timestamp(start_dt) <= pd.Timestamp(d) <= pd.Timestamp(end_dt)]
+            cd_str = " · ".join([pd.Timestamp(d).strftime("%m/%d") for d in cd_in_range]) if cd_in_range else "없음"
+            st.markdown("""
+            <div class="date-preview">
+              <div class="date-preview-label">📋 조회 기간 확인</div>
+              <b>{}</b> ~ <b>{}</b><br>
+              <span style="color:#718096">총 {}일 {}시간 · 교체일: {}</span>
+            </div>
+            """.format(
+                start_dt.strftime("%Y.%m.%d %H:%M"),
+                end_dt.strftime("%Y.%m.%d %H:%M"),
+                diff.days, diff.seconds // 3600,
+                cd_str,
+            ), unsafe_allow_html=True)
+        else:
+            st.error("⚠️ 종료가 시작보다 앞이야!")
+
+        # Param
+        st.markdown('<div class="sidebar-section">Param_name</div>', unsafe_allow_html=True)
+        with st.spinner("Param 목록 조회 중..."):
+            param_list = cached_fetch_params(equip_id)
+
+        # 설비 바뀌면 param 초기화
+        if st.session_state.get("last_equip") != equip_id:
+            st.session_state["sel_params"]    = param_list[:1] if param_list else []
+            st.session_state["last_equip"]    = equip_id
+            st.session_state["ms_params_ver"] = st.session_state.get("ms_params_ver", 0) + 1
+        if "sel_params" not in st.session_state:
+            st.session_state["sel_params"]    = param_list[:1] if param_list else []
+        if "ms_params_ver" not in st.session_state:
+            st.session_state["ms_params_ver"] = 0
+
+        col_a, col_b = st.columns(2)
+        with col_a:
+            if st.button("전체선택", key="param_all", use_container_width=True):
+                st.session_state["sel_params"]    = list(param_list)
+                st.session_state["ms_params_ver"] = st.session_state["ms_params_ver"] + 1
+                st.rerun()
+        with col_b:
+            if st.button("전체해제", key="param_none", use_container_width=True):
+                st.session_state["sel_params"]    = []
+                st.session_state["ms_params_ver"] = st.session_state["ms_params_ver"] + 1
+                st.rerun()
+
+        selected_params = st.multiselect(
+            "파라미터 선택",
+            param_list,
+            default=[p for p in st.session_state["sel_params"] if p in param_list],
+            key="ms_params_{}".format(st.session_state["ms_params_ver"]),
+        )
+        st.session_state["sel_params"] = selected_params
+
+        # ch_step
+        st.markdown('<div class="sidebar-section">ch_step</div>', unsafe_allow_html=True)
+        with st.spinner("ch_step 조회 중..."):
+            step_list = cached_fetch_steps(equip_id, chamber)
+
+        # 챔버 바뀌면 step 초기화
+        chamber_key = "{}::{}".format(equip_id, chamber)
+        if st.session_state.get("last_chamber") != chamber_key:
+            st.session_state["sel_steps"]    = list(step_list)
+            st.session_state["last_chamber"] = chamber_key
+            st.session_state["ms_steps_ver"] = st.session_state.get("ms_steps_ver", 0) + 1
+        if "sel_steps" not in st.session_state:
+            st.session_state["sel_steps"]    = list(step_list)
+        if "ms_steps_ver" not in st.session_state:
+            st.session_state["ms_steps_ver"] = 0
+
+        col_c, col_d = st.columns(2)
+        with col_c:
+            if st.button("전체선택", key="step_all", use_container_width=True):
+                st.session_state["sel_steps"]    = list(step_list)
+                st.session_state["ms_steps_ver"] = st.session_state["ms_steps_ver"] + 1
+                st.rerun()
+        with col_d:
+            if st.button("전체해제", key="step_none", use_container_width=True):
+                st.session_state["sel_steps"]    = []
+                st.session_state["ms_steps_ver"] = st.session_state["ms_steps_ver"] + 1
+                st.rerun()
+
+        selected_steps = st.multiselect(
+            "ch_step 선택",
+            step_list,
+            default=[s for s in st.session_state["sel_steps"] if s in step_list],
+            key="ms_steps_{}".format(st.session_state["ms_steps_ver"]),
+        )
+        st.session_state["sel_steps"] = selected_steps
+
+        # 표시방식: 오버레이 고정 (Subplot 제거, 변수 불필요하므로 제거)
+
+        # 차트 종류 (session_state로 유지)
+        st.markdown('<div class="sidebar-section">차트 종류</div>', unsafe_allow_html=True)
+        selected_charts = []
+        cols_chart = st.columns(2)
+        for i, chart_name in enumerate(CHART_FUNCS.keys()):
+            default_val = st.session_state.get("chart_{}".format(i), chart_name == "📈 Line Plot")
+            with cols_chart[i % 2]:
+                checked = st.checkbox(chart_name, value=default_val, key="chart_{}".format(i))
+                if checked:
+                    selected_charts.append(chart_name)
+
+        # 캐시 옵션
+        st.markdown('<div class="sidebar-section">캐시 설정</div>', unsafe_allow_html=True)
+        force_refresh = st.checkbox("강제 재조회 (캐시 무시)", value=False)
+
+        # 분석 버튼
+        st.markdown("---")
+        run_btn = st.button("⚡ 분석 실행", type="primary", use_container_width=True)
+        st.caption("캐시 우선 조회 · 없으면 DB 조회")
+
+    # ── 메인 콘텐츠 ───────────────────────────────────────────
+    if not run_btn and "fdc_result" not in st.session_state:
+        st.markdown("""
+        <div class="empty-state">
+          <div class="empty-icon">⚗</div>
+          <div class="empty-title">분석 대기 중</div>
+          <div class="empty-desc">
+            왼쪽에서 설비 · 파트 · 기간 · 파라미터를 선택하고<br>
+            <strong style="color:#1565C0">⚡ 분석 실행</strong>을 눌러줘
+          </div>
+        </div>
+        """, unsafe_allow_html=True)
+        return
+
+    # 분석 실행
+    if run_btn:
+        if not selected_params:
+            st.error("파라미터를 1개 이상 선택해줘!")
+            return
+        if not selected_charts:
+            st.error("차트 종류를 1개 이상 선택해줘!")
+            return
+        if start_dt >= end_dt:
+            st.error("종료가 시작보다 앞이야!")
+            return
+
+        # session_state에 날짜 저장 (다음 실행에도 유지)
+        st.session_state["dt_start"] = start_dt.strftime("%Y-%m-%d %H:%M:%S")
+        st.session_state["dt_end"]   = end_dt.strftime("%Y-%m-%d %H:%M:%S")
+
+        # 교체날짜 목록
+        change_dates = []
+        if not history_df.empty:
+            change_dates = [pd.Timestamp(d) for d in sorted(
+                history_df[
+                    (history_df["equip_id"]  == equip_id) &
+                    (history_df["chamber"]   == chamber) &
+                    (history_df["part_name"] == part_name)
+                ]["change_date"].dropna().tolist()
+            )]
+
+        _t_query_start = time.time()
+        with st.spinner("FDC 데이터 조회 중..."):
+            if CACHE_OK and not force_refresh:
+                cache  = FDCCache(cache_dir=CACHE_DIR)
+                fdc_df = fetch_fdc_data_cached(
+                    cache=cache, fetch_fn=fetch_fdc,
+                    equip_id=equip_id, chamber=chamber,
+                    param_names=selected_params, ch_steps=selected_steps,
+                    change_dates=change_dates, start_dt=start_dt, end_dt=end_dt,
+                    force_refresh=False,
+                )
+                if "last_query_count" not in st.session_state or st.session_state.get("last_query_sampled") is None:
+                    st.session_state["last_query_count"]   = len(fdc_df)
+                    st.session_state["last_query_sampled"] = False
+            else:
+                fdc_df = fetch_fdc(
+                    equip_id=equip_id, chamber=chamber,
+                    param_names=selected_params, ch_steps=selected_steps,
+                    change_dates=change_dates, start_dt=start_dt, end_dt=end_dt,
+                )
+        _query_elapsed = time.time() - _t_query_start
+        st.session_state["last_query_elapsed"] = _query_elapsed
+
+        if fdc_df.empty:
+            st.warning("FDC 데이터 없음 → 설비/기간/파라미터 설정 확인해줘")
+            return
+
+        # 세션에 저장
+        st.session_state["fdc_result"] = {
+            "fdc_df":          fdc_df,
+            "history_df":      history_df,
+            "equip_id":        equip_id,
+            "chamber":         chamber,
+            "part_name":       part_name,
+            "selected_params": selected_params,
+            "selected_steps":  selected_steps,
+            "selected_charts": selected_charts,
+            "change_dates":    change_dates,
+            "start_dt":        start_dt,
+            "end_dt":          end_dt,
+        }
+
+    # 결과 렌더
+    if "fdc_result" in st.session_state:
+        r = st.session_state["fdc_result"]
+        fdc_df         = r["fdc_df"]
+        history_df     = r["history_df"]
+        equip_id       = r["equip_id"]
+        chamber        = r["chamber"]
+        part_name      = r["part_name"]
+        selected_params = r["selected_params"]
+        selected_steps  = r["selected_steps"]
+        selected_charts = r.get("selected_charts") or ["📈 Line Plot"]
+        change_dates    = r["change_dates"]
+        start_dt        = r["start_dt"]
+        end_dt          = r["end_dt"]
+
+        # ── 조회 건수 / 샘플링 / 소요시간 배너 ──────────────
+        total_count = st.session_state.get("last_query_count", 0)
+        sampled     = st.session_state.get("last_query_sampled", False)
+        elapsed     = st.session_state.get("last_query_elapsed", 0)
+
+        # 시간 포맷 (1분 이상이면 분:초, 아니면 초)
+        def _fmt_time(sec):
+            if sec >= 60:
+                return "{}분 {:02.0f}초".format(int(sec // 60), sec % 60)
+            return "{:.1f}초".format(sec)
+
+        if sampled and total_count > 0:
+            st.markdown(
+                '<div class="warn-box">'
+                '⚠️ 전체 <b>{:,}건</b> 중 최대 {:,}건으로 샘플링됨 '
+                '(교체 전/후 각 {:,}건 균등 추출) — '
+                '정밀 분석이 필요하면 기간을 줄여줘! &nbsp;|&nbsp; ⏱ 조회 {}'
+                '</div>'.format(total_count, MAX_ROWS, MAX_ROWS // 2, _fmt_time(elapsed)),
+                unsafe_allow_html=True,
+            )
+        elif total_count > 0:
+            st.markdown(
+                '<div class="info-box">'
+                '✅ 총 <b>{:,}건</b> 조회됨 &nbsp;|&nbsp; ⏱ 조회 {}'
+                '</div>'.format(len(fdc_df), _fmt_time(elapsed)),
+                unsafe_allow_html=True,
+            )
+
+        period_label = "{} ~ {}".format(
+            start_dt.strftime("%Y.%m.%d"),
+            end_dt.strftime("%Y.%m.%d"),
+        )
+
+        # 파라미터별 탭
+        if len(selected_params) > 1:
+            tabs = st.tabs(selected_params)
+        else:
+            tabs = [st.container()]
+
+        for ti, param in enumerate(selected_params):
+            with tabs[ti]:
+                _t_render = time.time()
+                df_result = extract_before_after(
+                    fdc_df, history_df, equip_id, chamber,
+                    part_name, param, start_dt, end_dt,
+                )
+                if df_result.empty:
+                    st.warning("{} 데이터 없음".format(param))
+                    continue
+
+                df_result = mark_out_of_spec(df_result)
+                stats     = calc_statistics(df_result)
+                _render_elapsed = time.time() - _t_render
+
+                # 교체이력 없음 안내
+                if "교체이력없음" in df_result["event_label"].iloc[0]:
+                    st.markdown('<div class="warn-box">⚠️ 선택 기간 내 교체 이력 없음 → 전체 FDC 데이터 표시</div>', unsafe_allow_html=True)
+
+                # 파라미터별 소요시간 표시
+                st.caption("⏱ {} 렌더: {} · 데이터 {:,}건".format(
+                    param, _fmt_time(_render_elapsed), len(df_result)
+                ))
+
+                # 통계 카드
+                render_stat_cards(stats)
+                st.markdown("")
+
+                # 태그
+                tags_html = ""
+                tags_html += '<span class="tag tag-blue">{}</span>'.format(equip_id)
+                tags_html += '<span class="tag tag-blue">Chamber {}</span>'.format(chamber)
+                tags_html += '<span class="tag tag-blue">{}</span>'.format(part_name)
+                if change_dates:
+                    for cd in change_dates:
+                        if pd.Timestamp(start_dt) <= cd <= pd.Timestamp(end_dt):
+                            tags_html += '<span class="tag tag-blue">교체 {}</span>'.format(cd.strftime("%Y.%m.%d"))
+                upper = df_result["upper_spec"].dropna()
+                lower = df_result["lower_spec"].dropna()
+                if not upper.empty:
+                    tags_html += '<span class="tag tag-red">USL: {}</span>'.format(round(upper.mean(),4))
+                if not lower.empty:
+                    tags_html += '<span class="tag tag-red">LSL: {}</span>'.format(round(lower.mean(),4))
+                tags_html += '<span class="tag">{}</span>'.format(period_label)
+                st.markdown(tags_html, unsafe_allow_html=True)
+                st.markdown("")
+
+                # ch_step 목록
+                steps = sorted(df_result["ch_step"].dropna().unique()) if "ch_step" in df_result.columns else ["ALL"]
+                if not steps:
+                    steps = ["ALL"]
+
+                base_title = "{}-{} [{}] {}".format(equip_id, chamber, part_name, param)
+
+                # 차트 렌더
+                for chart_name in selected_charts:
+                    chart_key = CHART_FUNCS.get(chart_name)
+                    chart_title = "{} - {}".format(base_title, chart_name)
+
+                    st.markdown(
+                        '<div class="chart-section-header">{}</div>'.format(chart_name),
+                        unsafe_allow_html=True
+                    )
+                    c1, c2 = st.columns([10, 1])
+                    with c2:
+                        save_key = "save_{}_{}".format(ti, chart_key)
+                        if st.button("💾", key=save_key, help="HTML로 저장"):
+                            st.session_state["save_{}_{}".format(ti, chart_key)] = True
+
+                    fig = None
+                    if   chart_key == "line":        fig = chart_line(df_result, param, steps, change_dates, chart_title)
+                    elif chart_key == "scatter":     fig = chart_scatter(df_result, param, steps, change_dates, chart_title)
+                    elif chart_key == "box":         fig = chart_box(df_result, param, chart_title)
+                    elif chart_key == "violin":      fig = chart_violin(df_result, param, chart_title)
+                    elif chart_key == "histogram":   fig = chart_histogram(df_result, param, chart_title)
+                    elif chart_key == "bar":         fig = chart_bar(df_result, param, chart_title)
+                    elif chart_key == "heatmap":     fig = chart_heatmap(df_result, param, chart_title)
+                    elif chart_key == "bubble":      fig = chart_bubble(df_result, param, change_dates, chart_title)
+                    elif chart_key == "control":     fig = chart_control(df_result, param, change_dates, chart_title)
+                    elif chart_key == "change_rate": fig = chart_change_rate(df_result, param, chart_title)
+
+                    if fig:
+                        st.plotly_chart(fig, use_container_width=True, config=PLOTLY_CONFIG)
+                        # HTML 저장
+                        if st.session_state.get("save_{}_{}".format(ti, chart_key)):
+                            path = save_html(fig, chart_title)
+                            st.success("저장 완료: {}".format(path))
+                            st.session_state.pop("save_{}_{}".format(ti, chart_key))
+                    else:
+                        st.warning("{} 차트 생성 불가 (데이터 부족)".format(chart_name))
+
+
+if __name__ == "__main__":
+    main()
