@@ -1,16 +1,20 @@
-파트 교체 전/후 FDC 데이터 분석 시스템 · Samsung DS CVD
-v3.0
-DB 조회 오류: ('HY000', "[HY000] [Cloudera][ImpalaODBC] (110) Error while executing a query in Impala: [HY000] : ParseException: Syntax error in line 1:\n...AND lottype<>-' AND area='CVD' AND ((create_time ≥ '2...\n ^\nEncountered: IDENTIFIER\nExpected: AND, BETWEEN, DIV, EXCEPT, GROUP, HAVING, ILIKE, IN, INTERSECT, IREGEXP, IS, LIKE, LIMIT, ||, MINUS, NOT, OFFSET, OR, ORDER, REGEXP, RLIKE, UNION\n\n\nCAUSED BY: Exception: Syntax error\n (110) (SQLExecDirectW)")
-
-FDC 데이터 없음 → 설비/기간/파라미터 설정 확인해줘
-
-Query Executed Successfully...
->> Execution Time: 11.652 sec
-==================================================
-    Rows    :  53
-    Columns :  1
-    Size    :  5.63+ KB
-==================================================
-  [캐시] ❌ 캐시 MISS → DB 조회
-  [캐시] ❌ 캐시 MISS → DB 조회
-  [캐시] ❌ 캐시 MISS → DB 조회
+TypeError: Unordered Categoricals can only compare equality or not
+Traceback:
+File "C:\Users\bgyu1.lim\Desktop\새 폴더\fdc_data_streamlit.py", line 1556, in <module>
+    main()
+File "C:\Users\bgyu1.lim\Desktop\새 폴더\fdc_data_streamlit.py", line 1473, in main
+    df_result = extract_before_after(
+File "C:\Users\bgyu1.lim\Desktop\새 폴더\fdc_data_streamlit.py", line 535, in extract_before_after
+    (fdc["act_time"] >= window_start) &
+File "C:\Users\bgyu1.lim\AppData\Local\aipforge\lib\site-packages\pandas\core\ops\common.py", line 76, in new_method
+    return method(self, other)
+File "C:\Users\bgyu1.lim\AppData\Local\aipforge\lib\site-packages\pandas\core\arraylike.py", line 60, in __ge__
+    return self._cmp_method(other, operator.ge)
+File "C:\Users\bgyu1.lim\AppData\Local\aipforge\lib\site-packages\pandas\core\series.py", line 6119, in _cmp_method
+    res_values = ops.comparison_op(lvalues, rvalues, op)
+File "C:\Users\bgyu1.lim\AppData\Local\aipforge\lib\site-packages\pandas\core\ops\array_ops.py", line 330, in comparison_op
+    res_values = op(lvalues, rvalues)
+File "C:\Users\bgyu1.lim\AppData\Local\aipforge\lib\site-packages\pandas\core\ops\common.py", line 76, in new_method
+    return method(self, other)
+File "C:\Users\bgyu1.lim\AppData\Local\aipforge\lib\site-packages\pandas\core\arrays\categorical.py", line 135, in func
+    raise TypeError(
