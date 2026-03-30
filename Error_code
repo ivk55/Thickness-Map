@@ -1,20 +1,28 @@
-TypeError: Unordered Categoricals can only compare equality or not
+TypeError: Cannot setitem on a Categorical with a new category (N/A), set the categories first
 Traceback:
-File "C:\Users\bgyu1.lim\Desktop\새 폴더\fdc_data_streamlit.py", line 1556, in <module>
+File "C:\Users\bgyu1.lim\Desktop\새 폴더\fdc_data_streamlit.py", line 1739, in <module>
     main()
-File "C:\Users\bgyu1.lim\Desktop\새 폴더\fdc_data_streamlit.py", line 1473, in main
-    df_result = extract_before_after(
-File "C:\Users\bgyu1.lim\Desktop\새 폴더\fdc_data_streamlit.py", line 535, in extract_before_after
-    (fdc["act_time"] >= window_start) &
-File "C:\Users\bgyu1.lim\AppData\Local\aipforge\lib\site-packages\pandas\core\ops\common.py", line 76, in new_method
-    return method(self, other)
-File "C:\Users\bgyu1.lim\AppData\Local\aipforge\lib\site-packages\pandas\core\arraylike.py", line 60, in __ge__
-    return self._cmp_method(other, operator.ge)
-File "C:\Users\bgyu1.lim\AppData\Local\aipforge\lib\site-packages\pandas\core\series.py", line 6119, in _cmp_method
-    res_values = ops.comparison_op(lvalues, rvalues, op)
-File "C:\Users\bgyu1.lim\AppData\Local\aipforge\lib\site-packages\pandas\core\ops\array_ops.py", line 330, in comparison_op
-    res_values = op(lvalues, rvalues)
-File "C:\Users\bgyu1.lim\AppData\Local\aipforge\lib\site-packages\pandas\core\ops\common.py", line 76, in new_method
-    return method(self, other)
-File "C:\Users\bgyu1.lim\AppData\Local\aipforge\lib\site-packages\pandas\core\arrays\categorical.py", line 135, in func
+File "C:\Users\bgyu1.lim\Desktop\새 폴더\fdc_data_streamlit.py", line 1716, in main
+    if   chart_key == "line":        fig = chart_line(df_result, param, steps, change_dates, chart_title)
+File "C:\Users\bgyu1.lim\Desktop\새 폴더\fdc_data_streamlit.py", line 908, in chart_line
+    traces = make_segmented_line(sdf, param, step_name, change_dates, legend_shown)
+File "C:\Users\bgyu1.lim\Desktop\새 폴더\fdc_data_streamlit.py", line 875, in make_segmented_line
+    "hover": build_hovertemplates(in_s, param),
+File "C:\Users\bgyu1.lim\Desktop\새 폴더\fdc_data_streamlit.py", line 618, in build_hovertemplates
+    + "PPID: " + col("ppid") + "<br>"
+File "C:\Users\bgyu1.lim\Desktop\새 폴더\fdc_data_streamlit.py", line 608, in col
+    return df[c].fillna(na).astype(str)
+File "C:\Users\bgyu1.lim\AppData\Local\aipforge\lib\site-packages\pandas\core\generic.py", line 7349, in fillna
+    new_data = self._mgr.fillna(
+File "C:\Users\bgyu1.lim\AppData\Local\aipforge\lib\site-packages\pandas\core\internals\base.py", line 186, in fillna
+    return self.apply_with_block(
+File "C:\Users\bgyu1.lim\AppData\Local\aipforge\lib\site-packages\pandas\core\internals\managers.py", line 363, in apply
+    applied = getattr(b, f)(**kwargs)
+File "C:\Users\bgyu1.lim\AppData\Local\aipforge\lib\site-packages\pandas\core\internals\blocks.py", line 2334, in fillna
+    new_values = self.values.fillna(value=value, method=None, limit=limit)
+File "C:\Users\bgyu1.lim\AppData\Local\aipforge\lib\site-packages\pandas\core\arrays\_mixins.py", line 376, in fillna
+    self._validate_setitem_value(value)
+File "C:\Users\bgyu1.lim\AppData\Local\aipforge\lib\site-packages\pandas\core\arrays\categorical.py", line 1589, in _validate_setitem_value
+    return self._validate_scalar(value)
+File "C:\Users\bgyu1.lim\AppData\Local\aipforge\lib\site-packages\pandas\core\arrays\categorical.py", line 1614, in _validate_scalar
     raise TypeError(
