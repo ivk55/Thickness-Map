@@ -1,28 +1,80 @@
-TypeError: Cannot setitem on a Categorical with a new category (N/A), set the categories first
-Traceback:
-File "C:\Users\bgyu1.lim\Desktop\새 폴더\fdc_data_streamlit.py", line 1739, in <module>
-    main()
-File "C:\Users\bgyu1.lim\Desktop\새 폴더\fdc_data_streamlit.py", line 1716, in main
-    if   chart_key == "line":        fig = chart_line(df_result, param, steps, change_dates, chart_title)
-File "C:\Users\bgyu1.lim\Desktop\새 폴더\fdc_data_streamlit.py", line 908, in chart_line
-    traces = make_segmented_line(sdf, param, step_name, change_dates, legend_shown)
-File "C:\Users\bgyu1.lim\Desktop\새 폴더\fdc_data_streamlit.py", line 875, in make_segmented_line
-    "hover": build_hovertemplates(in_s, param),
-File "C:\Users\bgyu1.lim\Desktop\새 폴더\fdc_data_streamlit.py", line 618, in build_hovertemplates
-    + "PPID: " + col("ppid") + "<br>"
-File "C:\Users\bgyu1.lim\Desktop\새 폴더\fdc_data_streamlit.py", line 608, in col
-    return df[c].fillna(na).astype(str)
-File "C:\Users\bgyu1.lim\AppData\Local\aipforge\lib\site-packages\pandas\core\generic.py", line 7349, in fillna
-    new_data = self._mgr.fillna(
-File "C:\Users\bgyu1.lim\AppData\Local\aipforge\lib\site-packages\pandas\core\internals\base.py", line 186, in fillna
-    return self.apply_with_block(
-File "C:\Users\bgyu1.lim\AppData\Local\aipforge\lib\site-packages\pandas\core\internals\managers.py", line 363, in apply
-    applied = getattr(b, f)(**kwargs)
-File "C:\Users\bgyu1.lim\AppData\Local\aipforge\lib\site-packages\pandas\core\internals\blocks.py", line 2334, in fillna
-    new_values = self.values.fillna(value=value, method=None, limit=limit)
-File "C:\Users\bgyu1.lim\AppData\Local\aipforge\lib\site-packages\pandas\core\arrays\_mixins.py", line 376, in fillna
-    self._validate_setitem_value(value)
-File "C:\Users\bgyu1.lim\AppData\Local\aipforge\lib\site-packages\pandas\core\arrays\categorical.py", line 1589, in _validate_setitem_value
-    return self._validate_scalar(value)
-File "C:\Users\bgyu1.lim\AppData\Local\aipforge\lib\site-packages\pandas\core\arrays\categorical.py", line 1614, in _validate_scalar
-    raise TypeError(
+▶ TEST 1 - DB 연결 기본 응답 (SELECT 1)
+  SQL 미리보기: SELECT 1 AS test...
+Query Executed Successfully...
+>> Execution Time: 0.621 sec
+==================================================
+    Rows    :  1
+    Columns :  1
+    Size    :  245.00+ Bytes
+==================================================
+  ✅ 완료: 1.40초 | 1건
+  컬럼: ['test']
+
+────────────────────────────────────────────────────────────
+▶ TEST 2 - unnest 없이 raw 행 수 COUNT
+  SQL 미리보기: SELECT COUNT(*) AS cnt
+    FROM fab.m_erdtsum_data_agg
+    WHERE line_id IN ('PF...
+Query Executed Successfully...
+>> Execution Time: 43.136 sec
+==================================================
+    Rows    :  1
+    Columns :  1
+    Size    :  245.00+ Bytes
+==================================================
+  ✅ 완료: 43.14초 | 1건
+  컬럼: ['cnt']
+
+────────────────────────────────────────────────────────────
+▶ TEST 3 - unnest 포함 COUNT (파라미터 필터)
+  SQL 미리보기: WITH unnested AS (
+      SELECT
+        unnest(act_time)    AS act_time,
+       ...
+Query Executed Successfully...
+>> Execution Time: 2 min 21.806 sec
+==================================================
+    Rows    :  1
+    Columns :  1
+    Size    :  245.00+ Bytes
+==================================================
+  ✅ 완료: 141.81초 | 1건
+  컬럼: ['cnt']
+
+────────────────────────────────────────────────────────────
+▶ TEST 4 - 실제 데이터 조회 (현재 앱 방식)
+  SQL 미리보기: WITH unnested AS (
+      SELECT
+        eqp_id, disp_name, step_seq, ppid, lotid...
+Query Executed Successfully...
+>> Execution Time: 2 min 41.985 sec
+==================================================
+    Rows    :  10506
+    Columns :  14
+    Size    :  585.35+ KB
+==================================================
+  ✅ 완료: 161.99초 | 10506건
+  컬럼: ['eqp_id', 'disp_name', 'step_seq', 'ppid', 'lotid', 'wafer_no', 'slot_no', 'recipeid', 'act_time', 'param_name', 'ch_step', 'param_value', 'upper_spec', 'lower_spec']
+
+────────────────────────────────────────────────────────────
+▶ TEST 5 - 컬럼 최소화 조회 (SELECT * 대신)
+  SQL 미리보기: WITH unnested AS (
+      SELECT
+        unnest(act_time)    AS act_time,
+       ...
+Query Executed Successfully...
+>> Execution Time: 2 min 49.983 sec
+==================================================
+    Rows    :  10515
+    Columns :  5
+    Size    :  425.11+ KB
+==================================================
+  ✅ 완료: 169.98초 | 10515건
+  컬럼: ['act_time', 'ch_step', 'param_value', 'upper_spec', 'lower_spec']
+
+────────────────────────────────────────────────────────────
+▶ TEST 6 - LIMIT 1000 (소량 샘플)
+  SQL 미리보기: WITH unnested AS (
+      SELECT
+        unnest(act_time)    AS act_time,
+       ...
