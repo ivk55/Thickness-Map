@@ -1,4 +1,3 @@
-
 Traceback (most recent call last):
   File "/config/work/bgyuchanges/새폴더/test용코드.py", line 4, in <module>
     df = bdq.getData("""
@@ -8,4 +7,3 @@ Traceback (most recent call last):
   File "app/src/main.pyx", line 400, in main._execute_sql
   File "app/src/main.pyx", line 410, in main._execute_sql
 pyodbc.Error: ('HY000', '[HY000] [Cloudera][ImpalaODBC] (110) Error while executing a query in Impala: [HY000] : ParseException: Syntax error in line 9:\n)\n^\nEncountered: )\nExpected: AND, BETWEEN, DIV, ILIKE, IN, IREGEXP, IS, LIKE, ||, NOT, OR, REGEXP, RLIKE, IDENTIFIER\n\n\nCAUSED BY: Exception: Syntax error\n (110) (SQLExecDirectW)')
-devops@bgyu1--bgyuchanges-dev-86bb7dc7cc-ghz9g:~/work/bgyuchanges/새폴더$ 
