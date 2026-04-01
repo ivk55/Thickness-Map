@@ -1,3 +1,11 @@
+============================================================
+  FDC 쿼리 속도 테스트
+  시작: 2026-04-01 08:33:33
+  설비: TAHP854 | 챔버: A | 파라미터: ESC_CURRENT_AVG_T
+  기간: 30일
+============================================================
+
+────────────────────────────────────────────────────────────
 ▶ TEST 1 - DB 연결 기본 응답 (SELECT 1)
   SQL 미리보기: SELECT 1 AS test...
 Query Executed Successfully...
@@ -78,3 +86,24 @@ Query Executed Successfully...
       SELECT
         unnest(act_time)    AS act_time,
        ...
+  ❌ 오류 (901.85초): ('HY000', '[HY000] [Cloudera][ImpalaODBC] (110) Error while executing a query in Impala: [HY000] : Runtime Error: Query e441349b0f6f5ab6:c67ba303000000
+00: 93% Complete (63265 out of 67915)\nQuery e441349b0f6f5ab6:c67ba30300000000 expired due to execution time limit of 15m\n (110) (SQLExecDirectW)')
+
+============================================================
+  📊 최종 요약
+============================================================
+  TEST 1  DB 연결 기본응답  : 1.40초
+  TEST 2  raw COUNT        : 43.14초
+  TEST 3  unnest COUNT     : 141.81초
+  TEST 4  실제 전체 조회   : 161.99초  (10506건)
+  TEST 5  컬럼 최소화      : 169.98초  (10515건)
+  TEST 6  LIMIT 1000       : 901.85초  (0건)
+
+  🔍 병목 진단
+  → ❌ raw 조회가 느림 → 테이블 스캔 or 인덱스 문제
+
+  완료: 2026-04-01 08:57:13
+============================================================
+
+✅ 결과 저장됨: speed_test_result.txt
+PS C:\Users\bgyu1.lim\AppData\Local\Programs\Microsoft VS Code> 
