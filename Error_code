@@ -1,3 +1,61 @@
+import bigdataquery as bdq
+df = bdq.getData('SELECT 1 AS test',user_name = 'bgyu1.lim')
+print(df)
+
+evops@bgyu1--bgyuchanges-dev-86bb7dc7cc-ghz9g:~/work/bgyuchanges/새폴더$ /usr/local/bin/python /config/work/bgyuchanges/새폴더/fdc_data_streamlit.py
+
+### Server ###
+Executing login() function is necessary depending on the token.
+
+### Notice ###
+# [WARNING] [2026-04-07~09] Data Lake 스토리지 안정화 작업
+
+Data Lake 스토리지 안정화 작업으로 인해 쿼리 성능 저하 및 지연이 발생할 수 있습니다.
+
+- 작업내용
+    : Data Lake 스토리지 안정화 작업
+    : 스토리지 S/W 버전 업그레이드
+- 작업일정
+    : 2026-04-07(화) 09:30~17:00
+    : 2026-04-08(수) 09:30~17:00
+    : 2026-04-09(목) 09:30~17:00
+- 작업영향도
+    : Bigdataquery/Bigtracesummary/HUE/Data Lake Explorer/Spotfire IL+
+    : 서비스 순단 및 속도 저하 발생 할 수 있음
+
+--------------------------------------------------------------------------------
+
+# [CRITICAL] [데이터 추출 중단 공지] eds.m_eds_wf_measure 테이블 신규 데이터 추출 불가 안내(3/27 ~)
+
+원천시스템 HW 부하로 인해 데이터 추출 지연이 발생하여 일부 테이블에 대한 데이터 추출을 일시 중단합니다. 
+부하 해소 후 재개 예정이며 이후 별도로 데이터 소급 진행하겠습니다. 
+데이터 사용에 불편을 끼쳐드려 죄송합니다.
+
+* 테이블 명 : eds.m_eds_wf_measure
+* 원천 시스템 명 : YMS Memory
+* 일시 중단 기간 : 2026-03-27 ~ 
+* 문의처 : sshoney.lee 이상헌
+
+### Version ###
+Installed version of bigdataquery : 2.5.0
+Latest version of bigdataquery : 2.5.0
+
+### Help ###
+Guide : https://go/data
+Functions:
+    __version__ : display current version of bigdataquery
+    getData() : extract data based on condition you passed (dictionary or SQL)
+    getTraceData() : extract FDC Trace data based on condition you passed (dictionary only)
+    getTableList() : search the table lists based on keyword
+    getColumnInfo() : search column information based on table name
+    login() : authenticate AD user and get token on server environment (server env only)
+    getTokenTime() : check the remaining token expiration time (server env only)
+    setDebugMode() : enable|disable mode to display detailed execution time of primary internal functions (getData only)
+    setTimeZone() : set timezone information of bigdataquery during runtime (IANA format)
+    getTimeZone() : get timezone information of bigdataquery (default: system local timezone)
+    exportDataDecorator() : extend the existing bigdataquery function to export segmented data as the desired output during runtime
+    setServerContext() : Set the server context for the client local environment to enable server-env-only functions such as login()
+
 Traceback (most recent call last):
   File "app/src/server_auth.pyx", line 206, in server_auth._get_bigdataquery_token
 FileNotFoundError: [Errno 2] No such file or directory: '/config/.credential/bigdataquery.token.bgyu1.lim'
@@ -6,9 +64,10 @@ During handling of the above exception, another exception occurred:
 
 Traceback (most recent call last):
   File "/config/work/bgyuchanges/새폴더/fdc_data_streamlit.py", line 2, in <module>
-    df = bdq.getData('SSELECT 1 AS test',user_name = 'bgyu1.lim')
+    df = bdq.getData('SELECT 1 AS test',user_name = 'bgyu1.lim')
   File "app/src/util.pyx", line 80, in util.Timer.__call__.wrapper
   File "app/src/main.pyx", line 461, in main.getData
   File "app/src/server_auth.pyx", line 218, in server_auth._is_valid_token
   File "app/src/server_auth.pyx", line 210, in server_auth._get_bigdataquery_token
 bigdataquery.exceptions.TokenNotFoundException: There is no bigdataquery token issued for AD user 'bgyu1.lim' at '/config/.credential/' on 'Linux'.
+devops@bgyu1--bgyuchanges-dev-86bb7dc7cc-ghz9g:~/work/bgyuchanges/새폴더$ 
