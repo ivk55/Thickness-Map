@@ -1,6 +1,14 @@
 Traceback (most recent call last):
-  File "/config/work/bgyuchanges/새폴더/fdc_data_streamlit.py", line 3, in <module>
-    df = bdq.getData('SELECT 1 AS test')
+  File "app/src/server_auth.pyx", line 206, in server_auth._get_bigdataquery_token
+FileNotFoundError: [Errno 2] No such file or directory: '/config/.credential/bigdataquery.token.bgyu1.lim'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/config/work/bgyuchanges/새폴더/fdc_data_streamlit.py", line 2, in <module>
+    df = bdq.getData('SSELECT 1 AS test',user_name = 'bgyu1.lim')
   File "app/src/util.pyx", line 80, in util.Timer.__call__.wrapper
-  File "app/src/main.pyx", line 459, in main.getData
-ValueError: Parameter user_name is necessary.
+  File "app/src/main.pyx", line 461, in main.getData
+  File "app/src/server_auth.pyx", line 218, in server_auth._is_valid_token
+  File "app/src/server_auth.pyx", line 210, in server_auth._get_bigdataquery_token
+bigdataquery.exceptions.TokenNotFoundException: There is no bigdataquery token issued for AD user 'bgyu1.lim' at '/config/.credential/' on 'Linux'.
