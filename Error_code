@@ -1,9 +1,11 @@
-Traceback (most recent call last):
-  File "/config/work/bgyuchanges/새폴더/test용코드.py", line 4, in <module>
-    df = bdq.getData("""
-  File "app/src/util.pyx", line 80, in util.Timer.__call__.wrapper
-  File "app/src/main.pyx", line 491, in main.getData
-  File "app/src/main.pyx", line 831, in main._getData_by_sql
-  File "app/src/main.pyx", line 400, in main._execute_sql
-  File "app/src/main.pyx", line 410, in main._execute_sql
-pyodbc.Error: ('HY000', '[HY000] [Cloudera][ImpalaODBC] (110) Error while executing a query in Impala: [HY000] : ParseException: Syntax error in line 9:\n)\n^\nEncountered: )\nExpected: AND, BETWEEN, DIV, ILIKE, IN, IREGEXP, IS, LIKE, ||, NOT, OR, REGEXP, RLIKE, IDENTIFIER\n\n\nCAUSED BY: Exception: Syntax error\n (110) (SQLExecDirectW)')
+
+>> Enter User ID(ssoid): bgyu1.lim
+>> Enter AD Password: ************
+You have successfully logged into bigdataquery.
+[param 조회 오류 2H] name 'BDQ_USER' is not defined
+[param 조회 오류 24H] name 'BDQ_USER' is not defined
+[ch_step 조회 오류 2H] name 'BDQ_USER' is not defined
+[ch_step 조회 오류 24H] name 'BDQ_USER' is not defined
+>> Enter User ID(ssoid): bgyu1.lim
+>> Enter User ID(ssoid): >> Enter AD Password: ************
+You have successfully logged into bigdataquery.
