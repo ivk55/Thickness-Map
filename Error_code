@@ -1,12 +1,10 @@
-context for the client local environment to enable server-env-only functions such as login()
-
 Traceback (most recent call last):
   File "/config/work/bgyuchanges/새폴더/test용코드.py", line 4, in <module>
-    df = bdq.getData('''
+    df = bdq.getData("""
   File "app/src/util.pyx", line 80, in util.Timer.__call__.wrapper
   File "app/src/main.pyx", line 491, in main.getData
   File "app/src/main.pyx", line 831, in main._getData_by_sql
   File "app/src/main.pyx", line 400, in main._execute_sql
   File "app/src/main.pyx", line 410, in main._execute_sql
-pyodbc.Error: ('HY000', '[HY000] [Cloudera][ImpalaODBC] (110) Error while executing a query in Impala: [HY000] : ParseException: Syntax error in line 8:\nLIMIT 10\n^\nEncountered: LIMIT\nExpected: AND, BETWEEN, DIV, ILIKE, IN, IREGEXP, IS, LIKE, ||, NOT, OR, REGEXP, RLIKE, IDENTIFIER\n\nHint: reserved words have to be escaped when used as an identifier, e.g. `LIMIT`\n\nCAUSED BY: Exception: Syntax error\n (110) (SQLExecDirectW)')
+pyodbc.Error: ('HY000', '[HY000] [Cloudera][ImpalaODBC] (110) Error while executing a query in Impala: [HY000] : ParseException: Syntax error in line 9:\n)\n^\nEncountered: )\nExpected: AND, BETWEEN, DIV, ILIKE, IN, IREGEXP, IS, LIKE, ||, NOT, OR, REGEXP, RLIKE, IDENTIFIER\n\n\nCAUSED BY: Exception: Syntax error\n (110) (SQLExecDirectW)')
 devops@bgyu1--bgyuchanges-dev-86bb7dc7cc-ghz9g:~/work/bgyuchanges/새폴더$ 
