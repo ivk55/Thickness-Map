@@ -1,11 +1,41 @@
+"""
+PHDP FDC 파트 교체 전/후 분석 v3 - Streamlit UI
+=================================================
+실행: cd "/config/work/bgyuchanges/새폴더" --> streamlit run fdc_data_streamlit.py
+"""
 
->> Enter User ID(ssoid): bgyu1.lim
->> Enter AD Password: ************
-You have successfully logged into bigdataquery.
-[param 조회 오류 2H] name 'BDQ_USER' is not defined
-[param 조회 오류 24H] name 'BDQ_USER' is not defined
-[ch_step 조회 오류 2H] name 'BDQ_USER' is not defined
-[ch_step 조회 오류 24H] name 'BDQ_USER' is not defined
->> Enter User ID(ssoid): bgyu1.lim
->> Enter User ID(ssoid): >> Enter AD Password: ************
-You have successfully logged into bigdataquery.
+import streamlit as st
+import pandas as pd
+import plotly.graph_objects as go
+from datetime import datetime, timedelta
+import os
+
+# ── 같은 폴더의 모듈 import ──────────────────────────────────────
+XLWINGS_OK = False  # Linux 환경 - openpyxl 사용
+
+try:
+    import bigdataquery as bdq
+    BDQ_OK = True
+except ImportError:
+    BDQ_OK = False
+bdq.login()
+
+try:
+    from fdc_cache import FDCCache, fetch_fdc_data_cached
+    CACHE_OK = True
+except ImportError:
+    CACHE_OK = False
+
+# ============================================================
+# 설정
+# ============================================================
+
+EXCEL_PATH = r"/config/work/bgyuchanges/새폴더/AMAT Ultima 변경점 Sheet.xlsm"
+OUTPUT_DIR = r"/config/work/bgyuchanges/새폴더"
+CACHE_DIR  = r"/config/work/bgyuchanges/새폴더/cache"
+
+COLOR_BEFORE   = "#0000CD"   # 미디엄 블루
+COLOR_AFTER    = "#FF0000"   # 레드
+COLOR_SPEC     = "#7B0000"   # 스펙라인 (유지)
+COLOR_OUT_SPEC = "#6A0DAD"   # OOS 보라 (유지)
+COLOR_CHANGE   = "#800080"   # 변경점 선 퍼플
