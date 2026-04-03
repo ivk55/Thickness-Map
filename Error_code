@@ -1,41 +1,30 @@
-"""
-PHDP FDC 파트 교체 전/후 분석 v3 - Streamlit UI
-=================================================
-실행: cd "/config/work/bgyuchanges/새폴더" --> streamlit run fdc_data_streamlit.py
-"""
 
-import streamlit as st
-import pandas as pd
-import plotly.graph_objects as go
-from datetime import datetime, timedelta
-import os
+통계적가설검정
+- 방법 : 통계적데이터가 정규성 띄냐 안띄냐
 
-# ── 같은 폴더의 모듈 import ──────────────────────────────────────
-XLWINGS_OK = False  # Linux 환경 - openpyxl 사용
 
-try:
-    import bigdataquery as bdq
-    BDQ_OK = True
-except ImportError:
-    BDQ_OK = False
-bdq.login()
+귀무가설 : 기각하려고 하는 가설
+대체가설 : 채택하고싶은 가설
 
-try:
-    from fdc_cache import FDCCache, fetch_fdc_data_cached
-    CACHE_OK = True
-except ImportError:
-    CACHE_OK = False
+ex) h1이랑 h2가 다르다. 통계적으로 판단
 
-# ============================================================
-# 설정
-# ============================================================
+귀무가설 : h1=h2
+대체가설 : h1!=h2
 
-EXCEL_PATH = r"/config/work/bgyuchanges/새폴더/AMAT Ultima 변경점 Sheet.xlsm"
-OUTPUT_DIR = r"/config/work/bgyuchanges/새폴더"
-CACHE_DIR  = r"/config/work/bgyuchanges/새폴더/cache"
+귀무가설이 틀리면
+대체가설이 맞다
 
-COLOR_BEFORE   = "#0000CD"   # 미디엄 블루
-COLOR_AFTER    = "#FF0000"   # 레드
-COLOR_SPEC     = "#7B0000"   # 스펙라인 (유지)
-COLOR_OUT_SPEC = "#6A0DAD"   # OOS 보라 (유지)
-COLOR_CHANGE   = "#800080"   # 변경점 선 퍼플
+p-value
+
+1. 특정 fdc가 발생했을때 p-value가 특정 수준(5%) 이하로 낮으면
+2. 가져오고, 
+3. 연관part들을 1,0 구분x , 1,0.5,0.3
+4. 상관도마다 교체 시기가 오래된 애들 5개
+
+
+통계적 가설검정 방법
+
+kruskal wallis(비정규성 data)
+anova(정규성)
+
+이 방법을 활용해서 데이터 전/후 3일치를 긁어서 유의차가 있다없다 판단하는 걸 만들고싶어
