@@ -1,10 +1,10 @@
-
-2026-04-04 10:13:25.020 Uncaught app execution
-Traceback (most recent call last):
-  File "/config/.local/lib/python3.10/site-packages/streamlit/runtime/scriptrunner/exec_code.py", line 129, in exec_func_with_error_handling
-    result = func()
-  File "/config/.local/lib/python3.10/site-packages/streamlit/runtime/scriptrunner/script_runner.py", line 689, in code_to_exec
-    exec(code, module.__dict__)  # noqa: S102
-  File "/config/work/tatistical/새폴더/fdc_stat_v2.py", line 379, in <module>
-    learn_days=LEARN_DAYS, guard_hours=0, progress_bar=None):
-NameError: name 'LEARN_DAYS' is not defined
+NameError: name 'RELATION_DIR' is not defined
+Traceback:
+File "/config/work/tatistical/새폴더/fdc_stat_v2.py", line 1430, in <module>
+    main()
+File "/config/work/tatistical/새폴더/fdc_stat_v2.py", line 924, in main
+    cached_rel = load_relation_cache(equip_id, chamber)
+File "/config/work/tatistical/새폴더/fdc_stat_v2.py", line 358, in load_relation_cache
+    path = get_relation_cache_path(equip_id, chamber)
+File "/config/work/tatistical/새폴더/fdc_stat_v2.py", line 352, in get_relation_cache_path
+    os.makedirs(RELATION_DIR, exist_ok=True)
