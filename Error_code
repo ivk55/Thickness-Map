@@ -1,10 +1,10 @@
-KeyError: 'p_value'
+NameError: name 'RELATION_DIR' is not defined
 Traceback:
-File "/config/work/tatistical/새폴더/fdc_stat_v2.py", line 1431, in <module>
+File "/config/work/tatistical/새폴더/fdc_stat_v2.py", line 1311, in <module>
     main()
-File "/config/work/tatistical/새폴더/fdc_stat_v2.py", line 1129, in main
-    results   = apply_fdr(results)
-File "/config/work/tatistical/새폴더/fdc_stat_v2.py", line 324, in apply_fdr
-    params   = [p for p in results if results[p]["p_value"] is not None]
-File "/config/work/tatistical/새폴더/fdc_stat_v2.py", line 324, in <listcomp>
-    params   = [p for p in results if results[p]["p_value"] is not None]
+File "/config/work/tatistical/새폴더/fdc_stat_v2.py", line 864, in main
+    cached_rel = load_relation_cache(equip_id, chamber)
+File "/config/work/tatistical/새폴더/fdc_stat_v2.py", line 369, in load_relation_cache
+    path = get_relation_cache_path(equip_id, chamber)
+File "/config/work/tatistical/새폴더/fdc_stat_v2.py", line 364, in get_relation_cache_path
+    os.makedirs(RELATION_DIR, exist_ok=True)
