@@ -1,10 +1,10 @@
-NameError: name 'MIN_SAMPLE' is not defined
+KeyError: 'p_value'
 Traceback:
 File "/config/work/tatistical/새폴더/fdc_stat_v2.py", line 1431, in <module>
     main()
-File "/config/work/tatistical/새폴더/fdc_stat_v2.py", line 1091, in main
-    step_results = run_stat_test_by_step(
-File "/config/work/tatistical/새폴더/fdc_stat_v2.py", line 314, in run_stat_test_by_step
-    results_by_step[step] = run_stat_test(before, after)
-File "/config/work/tatistical/새폴더/fdc_stat_v2.py", line 239, in run_stat_test
-    result["low_sample"]     = len(before) < MIN_SAMPLE or len(after) < MIN_SAMPLE
+File "/config/work/tatistical/새폴더/fdc_stat_v2.py", line 1129, in main
+    results   = apply_fdr(results)
+File "/config/work/tatistical/새폴더/fdc_stat_v2.py", line 324, in apply_fdr
+    params   = [p for p in results if results[p]["p_value"] is not None]
+File "/config/work/tatistical/새폴더/fdc_stat_v2.py", line 324, in <listcomp>
+    params   = [p for p in results if results[p]["p_value"] is not None]
