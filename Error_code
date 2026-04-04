@@ -1,10 +1,10 @@
-UnboundLocalError: local variable 'RELATION_DIR' referenced before assignment
+NameError: name 'MIN_SAMPLE' is not defined
 Traceback:
 File "/config/work/tatistical/새폴더/fdc_stat_v2.py", line 1312, in <module>
     main()
-File "/config/work/tatistical/새폴더/fdc_stat_v2.py", line 865, in main
-    cached_rel = load_relation_cache(equip_id, chamber)
-File "/config/work/tatistical/새폴더/fdc_stat_v2.py", line 370, in load_relation_cache
-    path = get_relation_cache_path(equip_id, chamber)
-File "/config/work/tatistical/새폴더/fdc_stat_v2.py", line 364, in get_relation_cache_path
-    os.makedirs(RELATION_DIR, exist_ok=True)
+File "/config/work/tatistical/새폴더/fdc_stat_v2.py", line 1011, in main
+    step_results = run_stat_test_by_step(pdata_f, change_date, 0)
+File "/config/work/tatistical/새폴더/fdc_stat_v2.py", line 320, in run_stat_test_by_step
+    results_by_step[step] = run_stat_test(before, after)
+File "/config/work/tatistical/새폴더/fdc_stat_v2.py", line 254, in run_stat_test
+    result["low_sample"]     = len(before) < MIN_SAMPLE or len(after) < MIN_SAMPLE
