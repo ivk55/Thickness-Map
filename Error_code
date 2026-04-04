@@ -1,41 +1,10 @@
-"""
-PHDP FDC 통계적 가설검정 분석 v1
-
-실행: cd "/config/work/tatistical/새폴더/" && streamlit run fdc_stat_v2.py  
-pip install statsmodels --break-system-packages
-pip install openpyxl pandas numpy plotly scipy bigdataquey
-"""
-
-import streamlit as st
-import pandas as pd
-import numpy as np
-import plotly.graph_objects as go
-from datetime import datetime, timedelta
-import os
-import time
-from scipy import stats
-
-try:
-    import bigdataquery as bdq
-    BDQ_OK = True
-except Exception:
-    BDQ_OK = False
-
-try:
-    from openpyxl import load_workbook
-    OPENPYXL_OK = True
-except ImportError:
-    OPENPYXL_OK = False
-
-
-# ============================================================  
-# 설정  
-# ============================================================  
-EXCEL_PATH = "/config/work/tatistical/새폴더/AMAT Ultima 변경점 Sheet.xlsm"  
-BDQ_USER = "bgyu1.lim"
-
-COLOR_BEFORE   = "#0000CD"
-COLOR_AFTER    = "#FF0000"
-COLOR_SPEC     = "#7B0000"
-COLOR_CHANGE   = "#800080"
-COLOR_OUT_SPEC = "#6A0DAD"
+UnboundLocalError: local variable 'RELATION_DIR' referenced before assignment
+Traceback:
+File "/config/work/tatistical/새폴더/fdc_stat_v2.py", line 1312, in <module>
+    main()
+File "/config/work/tatistical/새폴더/fdc_stat_v2.py", line 865, in main
+    cached_rel = load_relation_cache(equip_id, chamber)
+File "/config/work/tatistical/새폴더/fdc_stat_v2.py", line 370, in load_relation_cache
+    path = get_relation_cache_path(equip_id, chamber)
+File "/config/work/tatistical/새폴더/fdc_stat_v2.py", line 364, in get_relation_cache_path
+    os.makedirs(RELATION_DIR, exist_ok=True)
