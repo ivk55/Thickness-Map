@@ -1,10 +1,6 @@
-NameError: name 'RELATION_DIR' is not defined
+NameError: name 'LEARN_DAYS' is not defined
 Traceback:
-File "/config/work/tatistical/새폴더/fdc_stat_v2.py", line 1430, in <module>
+File "/config/work/tatistical/새폴더/fdc_stat_v2.py", line 1431, in <module>
     main()
-File "/config/work/tatistical/새폴더/fdc_stat_v2.py", line 924, in main
-    cached_rel = load_relation_cache(equip_id, chamber)
-File "/config/work/tatistical/새폴더/fdc_stat_v2.py", line 358, in load_relation_cache
-    path = get_relation_cache_path(equip_id, chamber)
-File "/config/work/tatistical/새폴더/fdc_stat_v2.py", line 352, in get_relation_cache_path
-    os.makedirs(RELATION_DIR, exist_ok=True)
+File "/config/work/tatistical/새폴더/fdc_stat_v2.py", line 946, in main
+    value=LEARN_DAYS, key="ni_learn"
