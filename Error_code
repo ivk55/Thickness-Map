@@ -1,11 +1,10 @@
-1. BIAS MATCH SERIES / SHUNT
-BIAS_MATCH_SERIES_POSITION_AVG_T
-BIAS_MATCH_SHUNT_POSITION_AVG_T
 
-Bias Matcher 1 , ESC 0.3 , CBM 0.4 , RF Generator (BIAS) 0.1, 
-
-2. ESC
-ESC_CURRENT_AVG_T
-ESC_VOLTAGE_AVG_T
-
-ESC 0.8, Bias Macther 0.7, CBM 0.4,
+2026-04-04 10:13:25.020 Uncaught app execution
+Traceback (most recent call last):
+  File "/config/.local/lib/python3.10/site-packages/streamlit/runtime/scriptrunner/exec_code.py", line 129, in exec_func_with_error_handling
+    result = func()
+  File "/config/.local/lib/python3.10/site-packages/streamlit/runtime/scriptrunner/script_runner.py", line 689, in code_to_exec
+    exec(code, module.__dict__)  # noqa: S102
+  File "/config/work/tatistical/새폴더/fdc_stat_v2.py", line 379, in <module>
+    learn_days=LEARN_DAYS, guard_hours=0, progress_bar=None):
+NameError: name 'LEARN_DAYS' is not defined
