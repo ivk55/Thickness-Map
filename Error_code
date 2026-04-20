@@ -1,936 +1,253 @@
-[     UTC     ] Logs for phoenix-thicknessmapdraw.streamlit.app/
+chs	eqp	spacing	h1	h2	h3	mea_p	recipe	thk
+spacing = 3.6
+h1 = spacing + H11
+h2 = Spacing + H22
+h3 = Spacing + H3
+thk_p [1~25]
+recipe
+thk 
+
+
+TATP874-B
+
+					CUTEOS56KD		CUTEOS24KR		CUTEOS38KLC	
+		start time	end time		56583.1	56525.91	23871.51	23951.36	37148.63	37298.4
+		2026-04-14 23:40	2026-04-15 0:47		56382.15	56401.9	23837.05	23895.82	37122.92	37388.33
+					56759.59	56441.16	24007.39	23892.61	37400.01	37413.54
+		Module	LOTID		56109.65	56409.24	23746.01	23854.62	36996.77	37416.25
+		LP3	NPCC0295		56071.06	56282.13	23678.48	23819.7	36903.99	37290.25
+					56836.42	57156.64	23780.88	23968.95	37488.75	37925.69
+PPID	MAXTIME	SPACING_1	SPACING_2		57198.61	57259.05	23934.92	23996.85	37630.74	38036.23
+CUTEOS24KR	88.257	0.22	0.225		57103.73	56896.91	23928.17	23837.53	37657.12	37846.77
+CUTEOS38KLC	122.396	0.22	0.225		56947.45	56957.13	23869.15	23822.23	37626.71	37884.32
+CUTEOS56KD	216.176	0.21	0.215		56452.29	56898.68	23634.81	23775.6	37314.56	37819.4
+					56082.47	56705.54	23411.65	23707.16	36970.29	37683.2
+					56198.86	56726.66	23448.34	23728.98	37045.95	37630.62
+					56390.96	56916.47	23503.72	23856.24	37130.42	37795.1
+					58468.24	58613.67	24539.15	24545.78	37984	38334.31
+					59530.34	58508.6	24975.76	24513.74	38535.41	38364.12
+					59467.33	58299.19	24964.08	24415.77	38543.27	38197.14
+					58830.09	57757.16	24704.75	24172.11	38230.35	37917.87
+					58406.97	58108.38	24483.73	24301.35	37944.71	38123.7
+					57596.41	58228.38	24103.52	24327.42	37518.18	38186.62
+					57413.58	58883.93	23943.81	24589.76	37460.57	38672.66
+					56478.68	58245.49	23512.28	24293.76	36715.2	38072.22
+					56439.35	58286.06	23466.94	24309.51	36605.77	38073.87
+					56639.67	58177.59	23565.9	24286.04	36724.41	37996.43
+					57275.1	58246.13	23851.68	24355.12	37076.84	38001.43
+					57566.22	58261.23	24038.13	24393.67	37253.5	38030.61
+
+SIDE1 왼+1바퀴
+
+start time	end time		CUTEOS56KD	
+2026-04-15 5:44	2026-04-15 6:17		56835.71	56710.75
+			56470.98	56529.54
+			56495.7	56470.56
+Module	LOTID		56592.35	56578.29
+LP1	NPCC0442		56686.67	56527
+			56689.27	56976.17
+			56574.27	56858.37
+			56802.88	56927.77
+			56721.52	57233.03
+			57211.15	57376.44
+			57293.41	57358.16
+			56953.25	57150.94
+			56930.55	57127.67
+			57218.78	58563.74
+			56662.2	58393.94
+			56917.13	58437.12
+			57279.33	58351.08
+			57751.79	58552.76
+			58013.48	58606.81
+			59644.98	59130.53
+			59409.54	58811.37
+			59148.73	58277.64
+			58664.56	58190.15
+			58257.29	58509.87
+			57609.3	58610.84
+
+SIDE1 왼 1바퀴 +4각
+
+start time	end time		CUTEOS56KD	
+2026-04-15 11:04	2026-04-15 11:45		56752.31	56152.59
+			56731.15	56001.57
+			56958.63	55943.38
+Module	LOTID		56620.57	56053.74
+LP2	NPCC0942		56597.37	55956.45
+			56916.34	56437.82
+			57100.06	56316.6
+			57304.1	56400.7
+			56983.44	56675.07
+			57081.46	56877.73
+			56910.59	56798.88
+			56653.97	56606.52
+			56699.2	56563.21
+			57000.94	57912.93
+			56334.81	57791.64
+			56826.29	57838.31
+			57163.17	57701.24
+			57700.46	57909.18
+			57922.29	57930.97
+			59174.65	58516.56
+			58903.98	58081.84
+			58636.24	57568.88
+			58172.71	57475.09
+			57698.81	57756.84
+			57233.1	57911.78
+
+SIDE1 왼 1바퀴
+
+
+				spec in					
+									
+start time	end time			CUTEOS56KD		CUTEOS24KR		CUTEOS38KLC	
+2026-04-15 12:35	2026-04-15 13:04			57161.35	56227.72	24209.03	23833.59	37586.27	37013.19
+				57330.13	56063.49	24215.38	23698.51	37747.87	37026.47
+				57660.79	56019.47	24314.53	23733.73	37963.19	37041.48
+Module	LOTID			57023.83	56160.55	24136.85	23773.53	37544.55	37090.48
+LP3	NPCC0295			56842.66	56009.59	24162.64	23721.31	37466.5	37057.45
+				57426.23	56499	23984.87	23575.76	37933.57	37396.52
+				57698.34	56374.41	24025.27	23552.56	38037.96	37313.78
+				57931.76	56486.07	24113.79	23621.62	38216.18	37336.21
+				57481.82	56692.37	23973.88	23762.29	37888.25	37517.75
+				57421.22	56971.89	24043.13	23850.28	37805.41	37680.08
+				57172.58	56858.82	24028.81	23803.81	37563.58	37650.64
+				56824.25	56619.82	23927.35	23687.14	37381.1	37517.99
+				57040.14	56642.03	23921.11	23638.01	37612.57	37500.76
+				57286.26	58055.93	23825.87	24175.86	37284.99	37729.63
+				56662.53	57804.61	23533.22	24138.19	37149.81	37618.53
+				57226.8	57867.17	23685.53	24182.5	37312.04	37684.2
+				57584.13	57708.56	23853.49	24160.26	37540.68	37553.03
+				58375.79	57983.86	24235.01	24243.64	38101.03	37694.36
+				58432.49	58019.51	24368.43	24283.39	38015.39	37740.11
+				59552.96	58682.61	24947.73	24531.15	38583.45	38257.72
+				59129.8	58179.42	24825.19	24325.07	38014.82	37969.75
+				58766.42	57728.01	24712.24	24119.32	37648.6	37681.53
+				58320.69	57657.75	24523.57	24037.66	37377.9	37580.82
+				57831.95	57920.93	24277.78	24128.78	37430.27	37757.43
+				57436.67	58064.8	24023.7	24183.2	37452.5	37820.1
+
+
+
+
+
+TATP871-B
+
+		start time	end time				CUTEOS56KD		CUTEOS24KR		CUTEOS38KLC	
+		2026-04-17 17:52	2026-04-17 18:50				56233	56285.25	23849.54	23830.72	36815.74	36922.75
+							56766.25	56150.61	24024.74	23740.73	37155.39	36849.03
+		Module	LOTID				56292.14	56507.32	23852.04	23919.5	36914.99	37182.62
+		LP2	NPCC0295				55590.52	56596.69	23580.32	23938.21	36492.35	37152.92
+							56551.06	56114.74	23996.91	23759.83	37102.54	36859.09
+							57602.53	56710.79	24120.45	23663.41	37818.11	37225.33
+							57237.2	56800.95	23955.33	23681.35	37613.3	37280.9
+PPID	SPACING_1	SPACING_2					56907.12	57360.92	23798.48	23944.2	37429.51	37744.15
+CUTEOS24KR	0.225	0.22					56350.16	57560.69	23557.4	24140.04	37069.33	37969.73
+CUTEOS38KLC	0.225	0.22					56336.46	57409.13	23557.26	24081.81	36976.2	37847.65
+CUTEOS56KD	0.215	0.21					57063.39	57136.35	23897.7	23945.28	37524.96	37613.97
+							57522.09	56569.87	24104.72	23642.19	37773.79	37224.71
+							57820.6	56343.27	24212.87	23516.01	37976.73	37046.82
+							59449.01	57523.16	24848.25	23870.09	38457.55	37054.93
+							58768.63	57472.81	24574.14	23821.96	37985.95	36885.04
+							58809.22	57481.5	24518.33	23691.92	38015.72	36995.45
+							58215.38	58093.28	24305.8	24167.3	37707.53	37714.34
+							57836.64	58568.78	24100.95	24496.42	37486.65	38020.02
+							57417.33	58827.04	23921.44	24675.18	37097.03	38224.18
+							58363.82	59228.6	24349.7	24825.62	37566.59	38514.02
+							58556.13	59043.85	24546.09	24729.25	37926.18	38273.55
+							59008.09	58734.56	24767.21	24588.55	38271.97	38118.45
+							59303.57	57955.11	24893.54	24152.73	38432.99	37566.39
+							59507.14	57130.86	24967.12	23809.19	38599.75	37053.35
+							59577.54	57381.08	24978.76	23875.54	38621.72	37137.43
+
+
+0.8/1.0up  0.0/1.0 up								
+							CUTEOS56KD	
+							56597.67	56555.9
+			start time	end time			55651.05	56483.43
+			2026-04-17 22:50	2026-04-17 23:23			56690.65	56258.8
+							56666.28	56557.31
+			Module	LOTID			56121.18	56719.86
+			LP3	NPCC0942 			56653.36	57270.15
+							57231.53	56909.61
+							57664.45	56505.44
+							57623.53	56698.48
+							57227.53	57126.38
+							57237.35	56997.76
+							56718.57	57431.78
+							56117.21	57382
+							58261.42	58930.86
+							59036.19	58917.13
+							59128.63	58306.54
+							59562.47	57394.56
+							59504.87	57438.46
+							59487.63	57487.92
+							59300.93	57933.58
+							58707.07	57418.47
+							58567.47	57323.13
+							58038.62	57843.71
+							57326.59	58655.92
+							57698.08	58606.96
+
+
+
+
+"SIDE1 : +1.5 / +2
+
+-SIDE2 : 0 / +4각"							CUTEOS56KD		CUTEOS24KR		CUTEOS38KLC	
+ SIDE1 SPACING 0.215 -> 0.21							57018.37	56570.52	23958.88	23945.76	36970.02	36983.33
+							56130.42	56181.87	23698.12	23868.04	36706.03	36883.27
+							56869.36	56265.66	24056.36	23813.89	37181.79	36871.23
+			start time	end time			56869.12	56778.01	23970.47	23994.05	37042.48	37226
+			2026-04-18 1:15	2026-04-18 2:16			56414.47	56600.31	23832.67	23994.55	36924.63	37165.12
+							56971.9	57128.72	23809.68	23983.92	37502.7	37507.08
+			Module	LOTID			57486.55	56834.4	24084.67	23834.61	37887.11	37323.18
+			LP3	NPCC0442  			57426.38	56562.41	24156.51	23684.55	37760.02	37242.99
+							57428.61	56951.55	24094.58	23797.74	37655.44	37520.84
+							57184.96	57324.24	23981.76	23937.59	37592.84	37733.33
+							57226.64	57260.58	23951.15	24023.52	37621.7	37808.77
+							57044.38	57352.48	23844.72	24168.83	37604.87	37884.87
+							56495.01	57183.77	23594.53	24060.01	37291.01	37654.22
+							58199.13	58957.13	24386.46	24751.72	37898.72	38042.25
+							58885.08	58970.34	24718.65	24736.17	38437.12	37970.33
+							58852.01	58439.29	24745.12	24501.05	38357.24	37792.83
+							59185.75	57591.45	24902.12	24120.31	38433.07	37390.23
+							58896.94	57635.74	24845.51	24094.73	38314.21	37478.6
+							59059.85	57767.67	24799.08	24083.87	38254.15	37548.8
+							58871.24	58286.27	24680.12	24254.38	38129.7	37955.96
+							58603.45	57772.81	24520.88	24064.01	37956.98	37475.39
+							58407.64	58198.25	24449.15	24341.48	38009.33	37742.56
+							58091.06	58411.61	24316.23	24483.69	37950.17	37942.59
+							57381.51	58709.01	24014.05	24657.23	37591.22	38092.27
+							57775.17	58655.11	24155.21	24632.36	37684.04	37913.07
+
+
+
+SIDE1 : +0.5 / +1									SPEC IN					
+SIDE2 : -0.5 / +0.5									56634.21	56475.57	23999.57	23963.22	37194.42	37069.55
+									56709.59	56882.43	23980.03	24031.21	37124.22	37345.65
+									56590.75	56956.45	23872.6	24077.49	37076.35	37325.89
+				start time	end time				56093.45	56216.99	23671.16	23844.3	36754.05	36887.95
+				2026-04-18 3:55	2026-04-18 5:04				56804.6	56279.11	24024.91	23847.37	37262.97	36919.37
+									57188.75	57407.25	23967.43	23975.4	37551.92	37848.74
+				Module	LOTID				57126.38	57716.68	23862.73	24134.85	37490.6	38030.49
+				LP2	NPCC0295 				57341.69	57647.4	23824.71	24137.29	37587.94	37977.43
+									56876	57322.79	23689.98	24062.56	37446.16	37743.5
+									56812.05	56935.29	23666.54	23917.01	37259.18	37341.44
+									57413.23	56863.43	23976.33	23897.49	37823.19	37356.04
+									57573.66	56687.97	24105.78	23750.13	37851.16	37276.38
+									57585.73	56910.02	24124.88	23796.91	37885.2	37520.5
+									58639.27	57725.89	24585.98	24096.51	37892.97	37570.45
+									58113.41	57957.99	24333.3	24134.93	37659.58	37710.32
+									58247.93	57678.3	24336.4	24097.99	37898.13	37584.9
+									58102.94	58371.98	24209.98	24385.95	37814.58	37962.52
+									57681.72	58325.64	24056.9	24437.28	37744.17	37834.31
+									57065.76	58580.09	23816.07	24570.48	37060.39	37856.04
+									57994.84	58761.95	24234.72	24665.96	37482.42	37820.97
+									58232.83	58831.58	24399.41	24692.91	37853.87	37833.49
+									58784.81	58695.8	24660.18	24605.11	38340.23	37846.62
+									58861.35	58222.9	24739.44	24306.94	38290.6	37538.76
+									58978.42	57505.02	24792.88	24008.27	38267.17	37314.45
+								S25	58868.24	57969.91	24726.62	24147.44	38060.11	37667.02
 
-────────────────────────────────────────────────────────────────────────────────────────
 
-[14:20:21] 🚀 Starting up repository: 'thickness-map', branch: 'main', main module: 'wafer_map_draw.py'
-
-[14:20:21] 🐙 Cloning repository...
-
-[14:20:23] 🐙 Cloning into '/mount/src/thickness-map'...
-
-[14:20:23] 🐙 Cloned repository!
-
-[14:20:23] 🐙 Pulling code changes from Github...
-
-[14:20:24] 📦 Processing dependencies...
-
-
-──────────────────────────────────────── uv ───────────────────────────────────────────
-
-
-Using uv pip install.
-
-Using Python 3.13.13 environment at /home/adminuser/venv
-
-Resolved 47 packages in 570ms
-
-Prepared 47 packages in 2.90s
-
-Installed 47 packages in 490ms
-
- + altair==6.0.0
-
- + altgraph==0.17.5
-
- + attrs==26.1.0
-
- + blinker==1.9.0
-
- + cachetools==7.0.5
-
- + certifi==2026.2.25
-
- + charset-normalizer==3.4.7
-
- + click==8.3.2
-
- + contourpy==1.3.3
-
- + cycler==0.12.1
-
- + fonttools==[2026-04-14 14:20:29.051000] 4.62.1
-
- + gitdb==4.0.12
-
- + gitpython==3.1.46
-
- + idna==3.11
-
- + jinja2==3.1.6
-
- + jsonschema==4.26.0
-
- + jsonschema-specifications==2025.9.1
-
- + kiwisolver==1.5.0
-
- + markupsafe==3.0.3
-
- + matplotlib==3.10.8
-
- + narwhals==2.19.0
-
- + numpy==2.4.4
-
- + packaging==26.0
-
- + pandas==3.0.2
-
- + [2026-04-14 14:20:29.051533] pillow==12.2.0
-
- + plotly==6.7.0
-
- + protobuf==7.34.1
-
- + pyarrow==23.0.1
-
- + pydeck==0.9.1
-
- + pyinstaller==6.19.0
-
- + pyinstaller-hooks-contrib==2026.4
-
- + [2026-04-14 14:20:29.051798] pyparsing==3.3.2
-
- + python-dateutil==2.9.0.post0
-
- + referencing==0.37.0
-
- + requests==2.33.1
-
- + rpds-py==0.30.0
-
- + scipy==1.17.1
-
- + setuptools==82.0.1
-
- + six==1.17.0
-
- + smmap==5.0.3
-
- +[2026-04-14 14:20:29.052055]  streamlit==1.56.0
-
- + tenacity==9.1.4
-
- + toml==0.10.2
-
- + tornado==6.5.5
-
- + typing-extensions==4.15.0
-
- + urllib3==[2026-04-14 14:20:29.052289] 2.6.3
-
- + watchdog==6.0.0
-
-Checking if Streamlit is installed
-
-Found Streamlit version 1.56.0 in the environment
-
-Installing rich for an improved exception logging
-
-Using uv pip install.
-
-Using Python 3.13.13 environment at /home/adminuser/venv
-
-Resolved 4 packages in 126ms
-
-Prepared 4 packages in 108ms
-
-Installed 4 packages in 14ms
-
- + markdown-it-py==4.0.0
-
- + mdurl==0.1.2
-
- + pygments==2.20.0
-
- [2026-04-14 14:20:31.342047] + rich==15.0.0
-
-
-────────────────────────────────────────────────────────────────────────────────────────
-
-
-[14:20:32] 🐍 Python dependencies were installed from /mount/src/thickness-map/requirements.txt using uv.
-
-Check if streamlit is installed
-
-Streamlit is already installed
-
-[14:20:33] 📦 Processed dependencies!
-
-
-
-
-────────────────────── Traceback (most recent call last) ───────────────────────
-
-  /home/adminuser/venv/lib/python3.13/site-packages/streamlit/runtime/scriptru  
-
-  nner/exec_code.py:129 in exec_func_with_error_handling                        
-
-                                                                                
-
-  /home/adminuser/venv/lib/python3.13/site-packages/streamlit/runtime/scriptru  
-
-  nner/script_runner.py:689 in code_to_exec                                     
-
-                                                                                
-
-  /mount/src/thickness-map/wafer_map_draw.py:1233 in <module>                   
-
-                                                                                
-
-    1230 │   st.markdown(f"**웨이퍼 매핑 도구** | {equipment_type} {unit} 분석  
-
-    1231                                                                        
-
-    1232 if __name__ == "__main__":                                             
-
-  ❱ 1233 │   main()                                                             
-
-    1234                                                                        
-
-                                                                                
-
-  /mount/src/thickness-map/wafer_map_draw.py:1133 in main                       
-
-                                                                                
-
-    1130 │   │   │   │                                                          
-
-    1131 │   │   │   │   # THK 매핑 결과 표시                                   
-
-    1132 │   │   │   │   if viz_option == "정적 그래프 (Matplotlib)":           
-
-  ❱ 1133 │   │   │   │   │   fig_thk = wm.plot_thk_map_matplotlib(result, sele  
-
-    1134 │   │   │   │   │   if fig_thk:                                        
-
-    1135 │   │   │   │   │   │   st.pyplot(fig_thk)                             
-
-    1136 │   │   │   │   else:                                                  
-
-                                                                                
-
-  /mount/src/thickness-map/wafer_map_draw.py:419 in plot_thk_map_matplotlib     
-
-                                                                                
-
-     416 │   │   │   thk_map = result['thk_maps'][dataset_idx]                  
-
-     417 │   │   │                                                              
-
-     418 │   │   │   # 히트맵 그리기                                            
-
-  ❱  419 │   │   │   im = ax.pcolormesh(result['xq'], result['yq'], thk_map,    
-
-     420 │   │   │   │   │   │   │     shading='auto', cmap=self.colormap)      
-
-     421 │   │   │                                                              
-
-     422 │   │   │   # 컬러바                                                   
-
-────────────────────────────────────────────────────────────────────────────────
-
-AttributeError: 'numpy.ndarray' object has no attribute 'pcolormesh'
-
-────────────────────── Traceback (most recent call last) ───────────────────────
-
-  /home/adminuser/venv/lib/python3.13/site-packages/streamlit/runtime/scriptru  
-
-  nner/exec_code.py:129 in exec_func_with_error_handling                        
-
-                                                                                
-
-  /home/adminuser/venv/lib/python3.13/site-packages/streamlit/runtime/scriptru  
-
-  nner/script_runner.py:689 in code_to_exec                                     
-
-                                                                                
-
-  /mount/src/thickness-map/wafer_map_draw.py:1233 in <module>                   
-
-                                                                                
-
-    1230 │   st.markdown(f"**웨이퍼 매핑 도구** | {equipment_type} {unit} 분석  
-
-    1231                                                                        
-
-    1232 if __name__ == "__main__":                                             
-
-  ❱ 1233 │   main()                                                             
-
-    1234                                                                        
-
-                                                                                
-
-  /mount/src/thickness-map/wafer_map_draw.py:1133 in main                       
-
-                                                                                
-
-    1130 │   │   │   │                                                          
-
-    1131 │   │   │   │   # THK 매핑 결과 표시                                   
-
-    1132 │   │   │   │   if viz_option == "정적 그래프 (Matplotlib)":           
-
-  ❱ 1133 │   │   │   │   │   fig_thk = wm.plot_thk_map_matplotlib(result, sele  
-
-    1134 │   │   │   │   │   if fig_thk:                                        
-
-    1135 │   │   │   │   │   │   st.pyplot(fig_thk)                             
-
-    1136 │   │   │   │   else:                                                  
-
-                                                                                
-
-  /mount/src/thickness-map/wafer_map_draw.py:419 in plot_thk_map_matplotlib     
-
-                                                                                
-
-     416 │   │   │   thk_map = result['thk_maps'][dataset_idx]                  
-
-     417 │   │   │                                                              
-
-     418 │   │   │   # 히트맵 그리기                                            
-
-  ❱  419 │   │   │   im = ax.pcolormesh(result['xq'], result['yq'], thk_map,    
-
-     420 │   │   │   │   │   │   │     shading='auto', cmap=self.colormap)      
-
-     421 │   │   │                                                              
-
-     422 │   │   │   # 컬러바                                                   
-
-────────────────────────────────────────────────────────────────────────────────
-
-AttributeError: 'numpy.ndarray' object has no attribute 'pcolormesh'
-
-/mount/src/thickness-map/wafer_map_draw.py:423: UserWarning: Adding colorbar to a different Figure <Figure size 1600x600 with 4 Axes> than <Figure size 640x480 with 0 Axes> which fig.colorbar is called on.
-
-  plt.colorbar(im, ax=ax, label='Thickness (nm)', shrink=0.8)
-
-/mount/src/thickness-map/wafer_map_draw.py:539: UserWarning: Adding colorbar to a different Figure <Figure size 1500x600 with 4 Axes> than <Figure size 640x480 with 0 Axes> which fig.colorbar is called on.
-
-  plt.colorbar(im2, ax=ax2, label='Thickness (nm)', shrink=0.8)
-
-[14:20:21] 🚀 Starting up repository: 'thickness-map', branch: 'main', main module: 'wafer_map_draw.py'
-
-[14:20:21] 🐙 Cloning repository...
-
-[14:20:23] 🐙 Cloning into '/mount/src/thickness-map'...
-
-[14:20:23] 🐙 Cloned repository!
-
-[14:20:23] 🐙 Pulling code changes from Github...
-
-[14:20:24] 📦 Processing dependencies...
-
-
-──────────────────────────────────────── uv ───────────────────────────────────────────
-
-
-Using uv pip install.
-
-Using Python 3.13.13 environment at /home/adminuser/venv
-
-Resolved 47 packages in 570ms
-
-Prepared 47 packages in 2.90s
-
-Installed 47 packages in 490ms
-
- + altair==6.0.0
-
- + altgraph==0.17.5
-
- + attrs==26.1.0
-
- + blinker==1.9.0
-
- + cachetools==7.0.5
-
- + certifi==2026.2.25
-
- + charset-normalizer==3.4.7
-
- + click==8.3.2
-
- + contourpy==1.3.3
-
- + cycler==0.12.1
-
- + fonttools==[2026-04-14 14:20:29.051000] 4.62.1
-
- + gitdb==4.0.12
-
- + gitpython==3.1.46
-
- + idna==3.11
-
- + jinja2==3.1.6
-
- + jsonschema==4.26.0
-
- + jsonschema-specifications==2025.9.1
-
- + kiwisolver==1.5.0
-
- + markupsafe==3.0.3
-
- + matplotlib==3.10.8
-
- + narwhals==2.19.0
-
- + numpy==2.4.4
-
- + packaging==26.0
-
- + pandas==3.0.2
-
- + [2026-04-14 14:20:29.051533] pillow==12.2.0
-
- + plotly==6.7.0
-
- + protobuf==7.34.1
-
- + pyarrow==23.0.1
-
- + pydeck==0.9.1
-
- + pyinstaller==6.19.0
-
- + pyinstaller-hooks-contrib==2026.4
-
- + [2026-04-14 14:20:29.051798] pyparsing==3.3.2
-
- + python-dateutil==2.9.0.post0
-
- + referencing==0.37.0
-
- + requests==2.33.1
-
- + rpds-py==0.30.0
-
- + scipy==1.17.1
-
- + setuptools==82.0.1
-
- + six==1.17.0
-
- + smmap==5.0.3
-
- +[2026-04-14 14:20:29.052055]  streamlit==1.56.0
-
- + tenacity==9.1.4
-
- + toml==0.10.2
-
- + tornado==6.5.5
-
- + typing-extensions==4.15.0
-
- + urllib3==[2026-04-14 14:20:29.052289] 2.6.3
-
- + watchdog==6.0.0
-
-Checking if Streamlit is installed
-
-Found Streamlit version 1.56.0 in the environment
-
-Installing rich for an improved exception logging
-
-Using uv pip install.
-
-Using Python 3.13.13 environment at /home/adminuser/venv
-
-Resolved 4 packages in 126ms
-
-Prepared 4 packages in 108ms
-
-Installed 4 packages in 14ms
-
- + markdown-it-py==4.0.0
-
- + mdurl==0.1.2
-
- + pygments==2.20.0
-
- [2026-04-14 14:20:31.342047] + rich==15.0.0
-
-
-────────────────────────────────────────────────────────────────────────────────────────
-
-
-[14:20:32] 🐍 Python dependencies were installed from /mount/src/thickness-map/requirements.txt using uv.
-
-Check if streamlit is installed
-
-Streamlit is already installed
-
-[14:20:33] 📦 Processed dependencies!
-
-
-
-
-────────────────────── Traceback (most recent call last) ───────────────────────
-
-  /home/adminuser/venv/lib/python3.13/site-packages/streamlit/runtime/scriptru  
-
-  nner/exec_code.py:129 in exec_func_with_error_handling                        
-
-                                                                                
-
-  /home/adminuser/venv/lib/python3.13/site-packages/streamlit/runtime/scriptru  
-
-  nner/script_runner.py:689 in code_to_exec                                     
-
-                                                                                
-
-  /mount/src/thickness-map/wafer_map_draw.py:1233 in <module>                   
-
-                                                                                
-
-    1230 │   st.markdown(f"**웨이퍼 매핑 도구** | {equipment_type} {unit} 분석  
-
-    1231                                                                        
-
-    1232 if __name__ == "__main__":                                             
-
-  ❱ 1233 │   main()                                                             
-
-    1234                                                                        
-
-                                                                                
-
-  /mount/src/thickness-map/wafer_map_draw.py:1133 in main                       
-
-                                                                                
-
-    1130 │   │   │   │                                                          
-
-    1131 │   │   │   │   # THK 매핑 결과 표시                                   
-
-    1132 │   │   │   │   if viz_option == "정적 그래프 (Matplotlib)":           
-
-  ❱ 1133 │   │   │   │   │   fig_thk = wm.plot_thk_map_matplotlib(result, sele  
-
-    1134 │   │   │   │   │   if fig_thk:                                        
-
-    1135 │   │   │   │   │   │   st.pyplot(fig_thk)                             
-
-    1136 │   │   │   │   else:                                                  
-
-                                                                                
-
-  /mount/src/thickness-map/wafer_map_draw.py:419 in plot_thk_map_matplotlib     
-
-                                                                                
-
-     416 │   │   │   thk_map = result['thk_maps'][dataset_idx]                  
-
-     417 │   │   │                                                              
-
-     418 │   │   │   # 히트맵 그리기                                            
-
-  ❱  419 │   │   │   im = ax.pcolormesh(result['xq'], result['yq'], thk_map,    
-
-     420 │   │   │   │   │   │   │     shading='auto', cmap=self.colormap)      
-
-     421 │   │   │                                                              
-
-     422 │   │   │   # 컬러바                                                   
-
-────────────────────────────────────────────────────────────────────────────────
-
-AttributeError: 'numpy.ndarray' object has no attribute 'pcolormesh'
-
-────────────────────── Traceback (most recent call last) ───────────────────────
-
-  /home/adminuser/venv/lib/python3.13/site-packages/streamlit/runtime/scriptru  
-
-  nner/exec_code.py:129 in exec_func_with_error_handling                        
-
-                                                                                
-
-  /home/adminuser/venv/lib/python3.13/site-packages/streamlit/runtime/scriptru  
-
-  nner/script_runner.py:689 in code_to_exec                                     
-
-                                                                                
-
-  /mount/src/thickness-map/wafer_map_draw.py:1233 in <module>                   
-
-                                                                                
-
-    1230 │   st.markdown(f"**웨이퍼 매핑 도구** | {equipment_type} {unit} 분석  
-
-    1231                                                                        
-
-    1232 if __name__ == "__main__":                                             
-
-  ❱ 1233 │   main()                                                             
-
-    1234                                                                        
-
-                                                                                
-
-  /mount/src/thickness-map/wafer_map_draw.py:1133 in main                       
-
-                                                                                
-
-    1130 │   │   │   │                                                          
-
-    1131 │   │   │   │   # THK 매핑 결과 표시                                   
-
-    1132 │   │   │   │   if viz_option == "정적 그래프 (Matplotlib)":           
-
-  ❱ 1133 │   │   │   │   │   fig_thk = wm.plot_thk_map_matplotlib(result, sele  
-
-    1134 │   │   │   │   │   if fig_thk:                                        
-
-    1135 │   │   │   │   │   │   st.pyplot(fig_thk)                             
-
-    1136 │   │   │   │   else:                                                  
-
-                                                                                
-
-  /mount/src/thickness-map/wafer_map_draw.py:419 in plot_thk_map_matplotlib     
-
-                                                                                
-
-     416 │   │   │   thk_map = result['thk_maps'][dataset_idx]                  
-
-     417 │   │   │                                                              
-
-     418 │   │   │   # 히트맵 그리기                                            
-
-  ❱  419 │   │   │   im = ax.pcolormesh(result['xq'], result['yq'], thk_map,    
-
-     420 │   │   │   │   │   │   │     shading='auto', cmap=self.colormap)      
-
-     421 │   │   │                                                              
-
-     422 │   │   │   # 컬러바                                                   
-
-────────────────────────────────────────────────────────────────────────────────
-
-AttributeError: 'numpy.ndarray' object has no attribute 'pcolormesh'
-
-/mount/src/thickness-map/wafer_map_draw.py:423: UserWarning: Adding colorbar to a different Figure <Figure size 1600x600 with 4 Axes> than <Figure size 640x480 with 0 Axes> which fig.colorbar is called on.
-
-  plt.colorbar(im, ax=ax, label='Thickness (nm)', shrink=0.8)
-
-/mount/src/thickness-map/wafer_map_draw.py:539: UserWarning: Adding colorbar to a different Figure <Figure size 1500x600 with 4 Axes> than <Figure size 640x480 with 0 Axes> which fig.colorbar is called on.
-
-  plt.colorbar(im2, ax=ax2, label='Thickness (nm)', shrink=0.8)
-
-[14:20:21] 🚀 Starting up repository: 'thickness-map', branch: 'main', main module: 'wafer_map_draw.py'
-
-[14:20:21] 🐙 Cloning repository...
-
-[14:20:23] 🐙 Cloning into '/mount/src/thickness-map'...
-
-[14:20:23] 🐙 Cloned repository!
-
-[14:20:23] 🐙 Pulling code changes from Github...
-
-[14:20:24] 📦 Processing dependencies...
-
-
-──────────────────────────────────────── uv ───────────────────────────────────────────
-
-
-Using uv pip install.
-
-Using Python 3.13.13 environment at /home/adminuser/venv
-
-Resolved 47 packages in 570ms
-
-Prepared 47 packages in 2.90s
-
-Installed 47 packages in 490ms
-
- + altair==6.0.0
-
- + altgraph==0.17.5
-
- + attrs==26.1.0
-
- + blinker==1.9.0
-
- + cachetools==7.0.5
-
- + certifi==2026.2.25
-
- + charset-normalizer==3.4.7
-
- + click==8.3.2
-
- + contourpy==1.3.3
-
- + cycler==0.12.1
-
- + fonttools==[2026-04-14 14:20:29.051000] 4.62.1
-
- + gitdb==4.0.12
-
- + gitpython==3.1.46
-
- + idna==3.11
-
- + jinja2==3.1.6
-
- + jsonschema==4.26.0
-
- + jsonschema-specifications==2025.9.1
-
- + kiwisolver==1.5.0
-
- + markupsafe==3.0.3
-
- + matplotlib==3.10.8
-
- + narwhals==2.19.0
-
- + numpy==2.4.4
-
- + packaging==26.0
-
- + pandas==3.0.2
-
- + [2026-04-14 14:20:29.051533] pillow==12.2.0
-
- + plotly==6.7.0
-
- + protobuf==7.34.1
-
- + pyarrow==23.0.1
-
- + pydeck==0.9.1
-
- + pyinstaller==6.19.0
-
- + pyinstaller-hooks-contrib==2026.4
-
- + [2026-04-14 14:20:29.051798] pyparsing==3.3.2
-
- + python-dateutil==2.9.0.post0
-
- + referencing==0.37.0
-
- + requests==2.33.1
-
- + rpds-py==0.30.0
-
- + scipy==1.17.1
-
- + setuptools==82.0.1
-
- + six==1.17.0
-
- + smmap==5.0.3
-
- +[2026-04-14 14:20:29.052055]  streamlit==1.56.0
-
- + tenacity==9.1.4
-
- + toml==0.10.2
-
- + tornado==6.5.5
-
- + typing-extensions==4.15.0
-
- + urllib3==[2026-04-14 14:20:29.052289] 2.6.3
-
- + watchdog==6.0.0
-
-Checking if Streamlit is installed
-
-Found Streamlit version 1.56.0 in the environment
-
-Installing rich for an improved exception logging
-
-Using uv pip install.
-
-Using Python 3.13.13 environment at /home/adminuser/venv
-
-Resolved 4 packages in 126ms
-
-Prepared 4 packages in 108ms
-
-Installed 4 packages in 14ms
-
- + markdown-it-py==4.0.0
-
- + mdurl==0.1.2
-
- + pygments==2.20.0
-
- [2026-04-14 14:20:31.342047] + rich==15.0.0
-
-
-────────────────────────────────────────────────────────────────────────────────────────
-
-
-[14:20:32] 🐍 Python dependencies were installed from /mount/src/thickness-map/requirements.txt using uv.
-
-Check if streamlit is installed
-
-Streamlit is already installed
-
-[14:20:33] 📦 Processed dependencies!
-
-
-
-
-────────────────────── Traceback (most recent call last) ───────────────────────
-
-  /home/adminuser/venv/lib/python3.13/site-packages/streamlit/runtime/scriptru  
-
-  nner/exec_code.py:129 in exec_func_with_error_handling                        
-
-                                                                                
-
-  /home/adminuser/venv/lib/python3.13/site-packages/streamlit/runtime/scriptru  
-
-  nner/script_runner.py:689 in code_to_exec                                     
-
-                                                                                
-
-  /mount/src/thickness-map/wafer_map_draw.py:1233 in <module>                   
-
-                                                                                
-
-    1230 │   st.markdown(f"**웨이퍼 매핑 도구** | {equipment_type} {unit} 분석  
-
-    1231                                                                        
-
-    1232 if __name__ == "__main__":                                             
-
-  ❱ 1233 │   main()                                                             
-
-    1234                                                                        
-
-                                                                                
-
-  /mount/src/thickness-map/wafer_map_draw.py:1133 in main                       
-
-                                                                                
-
-    1130 │   │   │   │                                                          
-
-    1131 │   │   │   │   # THK 매핑 결과 표시                                   
-
-    1132 │   │   │   │   if viz_option == "정적 그래프 (Matplotlib)":           
-
-  ❱ 1133 │   │   │   │   │   fig_thk = wm.plot_thk_map_matplotlib(result, sele  
-
-    1134 │   │   │   │   │   if fig_thk:                                        
-
-    1135 │   │   │   │   │   │   st.pyplot(fig_thk)                             
-
-    1136 │   │   │   │   else:                                                  
-
-                                                                                
-
-  /mount/src/thickness-map/wafer_map_draw.py:419 in plot_thk_map_matplotlib     
-
-                                                                                
-
-     416 │   │   │   thk_map = result['thk_maps'][dataset_idx]                  
-
-     417 │   │   │                                                              
-
-     418 │   │   │   # 히트맵 그리기                                            
-
-  ❱  419 │   │   │   im = ax.pcolormesh(result['xq'], result['yq'], thk_map,    
-
-     420 │   │   │   │   │   │   │     shading='auto', cmap=self.colormap)      
-
-     421 │   │   │                                                              
-
-     422 │   │   │   # 컬러바                                                   
-
-────────────────────────────────────────────────────────────────────────────────
-
-AttributeError: 'numpy.ndarray' object has no attribute 'pcolormesh'
-
-────────────────────── Traceback (most recent call last) ───────────────────────
-
-  /home/adminuser/venv/lib/python3.13/site-packages/streamlit/runtime/scriptru  
-
-  nner/exec_code.py:129 in exec_func_with_error_handling                        
-
-                                                                                
-
-  /home/adminuser/venv/lib/python3.13/site-packages/streamlit/runtime/scriptru  
-
-  nner/script_runner.py:689 in code_to_exec                                     
-
-                                                                                
-
-  /mount/src/thickness-map/wafer_map_draw.py:1233 in <module>                   
-
-                                                                                
-
-    1230 │   st.markdown(f"**웨이퍼 매핑 도구** | {equipment_type} {unit} 분석  
-
-    1231                                                                        
-
-    1232 if __name__ == "__main__":                                             
-
-  ❱ 1233 │   main()                                                             
-
-    1234                                                                        
-
-                                                                                
-
-  /mount/src/thickness-map/wafer_map_draw.py:1133 in main                       
-
-                                                                                
-
-    1130 │   │   │   │                                                          
-
-    1131 │   │   │   │   # THK 매핑 결과 표시                                   
-
-    1132 │   │   │   │   if viz_option == "정적 그래프 (Matplotlib)":           
-
-  ❱ 1133 │   │   │   │   │   fig_thk = wm.plot_thk_map_matplotlib(result, sele  
-
-    1134 │   │   │   │   │   if fig_thk:                                        
-
-    1135 │   │   │   │   │   │   st.pyplot(fig_thk)                             
-
-    1136 │   │   │   │   else:                                                  
-
-                                                                                
-
-  /mount/src/thickness-map/wafer_map_draw.py:419 in plot_thk_map_matplotlib     
-
-                                                                                
-
-     416 │   │   │   thk_map = result['thk_maps'][dataset_idx]                  
-
-     417 │   │   │                                                              
-
-     418 │   │   │   # 히트맵 그리기                                            
-
-  ❱  419 │   │   │   im = ax.pcolormesh(result['xq'], result['yq'], thk_map,    
-
-     420 │   │   │   │   │   │   │     shading='auto', cmap=self.colormap)      
-
-     421 │   │   │                                                              
-
-     422 │   │   │   # 컬러바                                                   
-
-────────────────────────────────────────────────────────────────────────────────
-
-AttributeError: 'numpy.ndarray' object has no attribute 'pcolormesh'
-
-/mount/src/thickness-map/wafer_map_draw.py:423: UserWarning: Adding colorbar to a different Figure <Figure size 1600x600 with 4 Axes> than <Figure size 640x480 with 0 Axes> which fig.colorbar is called on.
-
-  plt.colorbar(im, ax=ax, label='Thickness (nm)', shrink=0.8)
-
-/mount/src/thickness-map/wafer_map_draw.py:539: UserWarning: Adding colorbar to a different Figure <Figure size 1500x600 with 4 Axes> than <Figure size 640x480 with 0 Axes> which fig.colorbar is called on.
-
-  plt.colorbar(im2, ax=ax2, label='Thickness (nm)', shrink=0.8)
