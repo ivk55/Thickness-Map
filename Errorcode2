@@ -1,0 +1,9 @@
+KeyError: 'x'
+
+Traceback:
+
+File "/config/work/tatistical/새폴더/fdc_stat_v2.py", line 1536, in <module>     main()
+
+File "/config/work/tatistical/새폴더/fdc_stat_v2.py", line 1430, in main     fig = make_scatter_chart(pdata_f, param, change_date,
+
+File "/config/work/tatistical/새폴더/fdc_stat_v2.py", line 668, in make_scatter_chart     hovertemplate="시간: %{x}<br>값: %{y:.4f}<br>Step: {}<extra>{}</extra>".format(step, ba),
