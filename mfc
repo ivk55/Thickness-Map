@@ -1,0 +1,93 @@
+
+
+
+                                                            추정원인 	                 확인내용	           대      책 
+MFC 설정과 출력이 일치하지 않을 때                  MFC와 표시기 전압이 다르다 / 	설정과 출력을 확인한다 /	MFC와 표시기 사이의 배선 재 점검 
+                                                1차압・2차 압력이 사양범위 밖인 경우/ 	MFC 1차・2차 압력을 확인 	/압력이 MFC 사양범위 밖인 경우 다른 배관기기를 확인한다 
+                                                전원라인 Noise / 신호라인 Noise 	/전원과 신호 파형을 확인 	Noise 해결 / Noise 발생원으로부터 이격, MFC 케이블을 Shield 
+                                                  가스 종류가 다르다 	/실제 사용 하는 가스 다름	/           바른 가스의 MFC로 교환
+                                                  MFC 고장 [막힘, 유량과다,기타） /	상기 이외 	/   MFC 교환 
+
+
+
+
+MFC 출력이 불안정. Hunting 포함                              １차 압력이 높다 /	MFC 1차 압력을 확인 	/압력이 사양 범위 안이면 다른 배관 기기 확인 
+                                                        1차 압력 또는 2차 압력이 불안정 /	MFC 1차압・2차 압력을 확인/ 	압력이 사양 범위 안이면 다른 배관 기기 확인
+                                                        MFC에 입력이 불안정 	/MFC 커넥터에서 입력 전압을 확인 /	입력 전압이 불안정 하면 전원 또는 배선 케이블 재 점검
+                                                        MFC와 표시기 전압이 다르다 /	출력전압을 확인한다 /	출력전압이 안정하면 MFC와 표시기 사이의 배선을 재 점검
+                                                        가스 종류가 다르다 /	라벨과 실제 사용 가스 다름/	바른 가스의 MFC로 교환한다 
+                                                        전원 라인 Noise / 신호 라인 Noise	/전원과 신호의 파형을 확인 /	Noise 해결 : Noise 발생원으로부터 이격, MFC 케이블을 Shield 
+                                                        MFC 고장（Actuator Trouble, 기타 ） /	상기 이외 /	MFC 교환
+
+
+Overshoot	                                               １차 압력이 높다 	/  MFC 1차 압력을 확인 	/   압력이 MFC 사양범위에 있으면 다른 배관기기 확인
+                                                        	1차압 2차 압력 급변 /  	1차압・2차압을 확인 	/압력변동 원인 제거
+                                                        	1차압 2차 압력 급변 / 	MFC 후단에 압력 정체	연접된 LINE및 CHAMBER 점검 / 각valve및 공급 압력 점검 동작 차압이 큰 MFC 사용
+                                                        	가스 종류가 다르다 	/라벨과 실제 사용 가스 다름	/바른 가스의 MFC로 교환한다 
+                                                        	Regulator 고장/ 	Regulator 교환 	/Regulator 교환
+                                                        	MFC 고장 (유량과다）/ 	상기 이외 /	MFC 교환 
+                                                        	UNDER_SHOOT	/-MFC Outlet에 가스 有/	-Gas Line을 변경하요 Dead 공간 줄임
+                                                        	UNDER_SHOOT	-MFC 제어 Valve가 Full /	-PID값을 교정
+                                                        	UNDER_SHOOT	 Open으로 이탈된다	/-Soft Start 사용
+                                                        	PID	/      PID 제어 불량	/ MAKER에 문의( PID수정 및 교환)
+
+
+
+응답지연                                                가스 종류가 다르다 /	MFC 라벨 가스와 실제 사용 하는 가스 점검	/바른 가스의 MFC로 교환
+                                                        Regulator 고장/ 	Regulator 교환 /Regulator 교환
+                                                        1차 압력의 급격한 저하 / 	1차 압력을 확인 	/압력 저하의 원인 제거
+                                                        설정 전압이 너무 낮다 	/설정전압이 사양범위 안인지 확인	/사양 범위 내 설정전압으로 사용 
+                                                        MFC 고장 /	상기 이외 /	MFC 교환 
+
+
+
+실 유량 이상／MFC 출력 치와 실 유량이 다를 때
+
+
+                                                      가스 종류가 다르다 	/MFC 라벨 가스와 실제 사용 하는 가스 점검/	바른 가스의 MFC로 교환
+                                                      1차압・2차 압력이 사양 범위 밖이다/ 	MFC 1차・2차 압력을 확인 	/압력이 MFC 사양범위에 들어오게 함. / 다른 배관 기기를 확인 
+                                                      주위 온도가 정도 보증 범위 밖인 경우 /	MFC 주위 온도를 확인/ 	주위 온도를 MFC 정도 보증 범위에 들어오게 함.
+                                                      실 유량 측정방법이 틀리다 /	-	/바른 방법으로 측정
+                                                      CF 틀림 /	-/	CF 변경
+                                                      MFC 고장(경시 변화 등) /	상기 이외 /	MFC 교환 
+
+
+Zero점 이상
+
+
+                                                  ZERO점 불안정	/막 두께가 이상	/ZERO점 RECAL. 실시
+                                                  ZERO점 불안정	/SENSOR의 노화	출력 치 확인/ 후 MAKER에 문의
+                                                  ZERO점 불안정/	THERMAL SYPHONING 현상	/출력 치 확인 후 MAKER에 문의
+                                                  Output이 Zero 상태	-Sensor막힘 / Board문제/	-MFC Maker에 의뢰
+                                                   MFC가 점차적Zero값을 벗어남/	-부분적인 Sensor막힘/	-MFC Maker에 의뢰
+                                                  Zero 점 표류 , Zero 점 편차	/ -주위 온도 변화 , Senor고장 , Thermal Siphoning , Zero 점 조정/	-온도 안정화 , 정해진 절차에 따라서 Zero점 조정
+
+그 외
+
+
+
+                                              진동	/- Inlet 압력이 너무 높다 / MFC PID 제어 값 부정확   하다	/- 압력을 낮춘다 , MFC Maker Call
+                                              Set Point가 Full Open에 도달	/-압력이 너무 낮다 / Valve보다 과도한 압력	/-GAS 압력 증가 , Cycle Purge 실시 , Air Valve 나 Filter 오염 , 실린더 교체
+                                              하지 않는다	/ Drop이 생긴다 , 다른 MFC보다 과도한 압력	/-GAS 압력 증가 , Cycle Purge 실시 , Air Valve 나 Filter 오염 , 실린더 교체
+                                              	-/ Drop이 생긴다 / 실린더가 비어 있다	/-GAS 압력 증가 , Cycle Purge 실시 , Air Valve 나 Filter 오염 , 실린더 교체
+                                              낮은 Set Point Control이 안됨 /	-Valve Seal Leak	/-Zero로 설정하고 가스가 흐르는 양을 확인 한다
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
