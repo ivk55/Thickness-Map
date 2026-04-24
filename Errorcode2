@@ -17,3 +17,19 @@ The 'fillcolor' property is a color and may be specified as:
   - An hsl/hsla string (e.g. 'hsl(0,100%,50%)')
   - An hsv/hsva string (e.g. 'hsv(0,100%,100%)')
   - A named CSS color: see https://plotly.com/python/css-colors/ for a list
+
+
+📉 CDF Plot
+
+차트 오류: make_cdf_chart() takes 3 positional arguments but 4 were given
+
+pdf
+
+차트 오류: Invalid value of type 'builtins.str' received for the 'fillcolor' property of scatter Received value: '#0000CD1A'
+
+The 'fillcolor' property is a color and may be specified as:
+  - A hex string (e.g. '#ff0000')
+  - An rgb/rgba string (e.g. 'rgb(255,0,0)')
+  - An hsl/hsla string (e.g. 'hsl(0,100%,50%)')
+  - An hsv/hsva string (e.g. 'hsv(0,100%,100%)')
+  - A named CSS color: see https://plotly.com/python/css-colors/ for a list
