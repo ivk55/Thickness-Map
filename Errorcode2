@@ -1,13 +1,25 @@
-026-04-25 11:32:03.292 Uncaught app execution
-Traceback (most recent call last):
-  File "/config/.local/lib/python3.10/site-packages/streamlit/runtime/scriptrunner/exec_code.py", line 129, in exec_func_with_error_handling
-    result = func()
-  File "/config/.local/lib/python3.10/site-packages/streamlit/runtime/scriptrunner/script_runner.py", line 689, in code_to_exec
-    exec(code, module.__dict__)  # noqa: S102
-  File "/config/work/tatistical/새폴더/fdc_stat_v2.py", line 1254, in <module>
-    main()
-  File "/config/work/tatistical/새폴더/fdc_stat_v2.py", line 1062, in main
-    fig = make_scatter_chart(pdata_f, param, change_date,
-  File "/config/work/tatistical/새폴더/fdc_stat_v2.py", line 584, in make_scatter_chart
-    hovertemplate=f"시간: %{{x}}<br>값: %{{y:.4f}}<br>Step: {step}<extra>{ba}</extra>",
-UnboundLocalError: local variable 'step' referenced before assignment
+    if steps:
+        for step in steps:
+            sdf = df[df["ch_step"] == step]
+            for ba, color in [("Before", COLOR_BEFORE), ("After", COLOR_AFTER)]:
+                sub = sdf[sdf["before_after"] == ba]
+                if sub.empty:
+                    continue
+                fig.add_trace(go.Scatter(
+                    x=sub["act_time"], y=sub["param_value"],
+                    mode="markers",
+                    name="{} {}".format(step, ba),
+                    marker=dict(size=5, color=color, opacity=0.65, symbol="circle"),
+                    hovertemplate=f"시간: %{{x}}<br>값: %{{y:.4f}}<extra>{ba}</extra>",
+                ))
+    else:
+        for ba, color in [("Before", COLOR_BEFORE), ("After", COLOR_AFTER)]:
+            sub = df[df["before_after"] == ba]
+            if sub.empty:
+                continue
+            fig.add_trace(go.Scatter(
+                x=sub["act_time"], y=sub["param_value"],
+                mode="markers", name=ba,
+                marker=dict(size=5, color=color, opacity=0.65, symbol="circle"),
+                hovertemplate=f"시간: %{{x}}<br>값: %{{y:.4f}}<extra>{ba}</extra>",
+            ))
