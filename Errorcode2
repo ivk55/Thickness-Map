@@ -1,25 +1,19 @@
-    if steps:
-        for step in steps:
-            sdf = df[df["ch_step"] == step]
-            for ba, color in [("Before", COLOR_BEFORE), ("After", COLOR_AFTER)]:
-                sub = sdf[sdf["before_after"] == ba]
-                if sub.empty:
-                    continue
-                fig.add_trace(go.Scatter(
-                    x=sub["act_time"], y=sub["param_value"],
-                    mode="markers",
-                    name="{} {}".format(step, ba),
-                    marker=dict(size=5, color=color, opacity=0.65, symbol="circle"),
-                    hovertemplate=f"시간: %{{x}}<br>값: %{{y:.4f}}<extra>{ba}</extra>",
-                ))
-    else:
-        for ba, color in [("Before", COLOR_BEFORE), ("After", COLOR_AFTER)]:
-            sub = df[df["before_after"] == ba]
-            if sub.empty:
-                continue
-            fig.add_trace(go.Scatter(
-                x=sub["act_time"], y=sub["param_value"],
-                mode="markers", name=ba,
-                marker=dict(size=5, color=color, opacity=0.65, symbol="circle"),
-                hovertemplate=f"시간: %{{x}}<br>값: %{{y:.4f}}<extra>{ba}</extra>",
-            ))
+>> Enter User ID(ssoid): bgyu1.lim
+>> Enter AD Password: ************
+You have successfully logged into bigdataquery.
+✅ BDQ 로그인 완료
+============================================================
+  FDC 연관도 학습 (Bulk Query 방식)
+  학습 기간: 전/후 1일 | Guard: 6시간
+  설비: ['TAHP307,TAHP701,TAHP702,TAHP703,TAHP851,TAHP852,TAHP853,TAHP854,TAHP855,TAHP856,TAHP857'] | 챔버: ['A,B,D']
+  ※ DB 1번만 조회 후 Pandas 필터링
+============================================================
+✅ Excel 로드: 1127건
+
+[TAHP307,TAHP701,TAHP702,TAHP703,TAHP851,TAHP852,TAHP853,TAHP854,TAHP855,TAHP856,TAHP857 A,B,D] 학습 시작
+----------------------------------------
+  ⚠️  교체 이력 없음
+  ❌ 학습 실패
+
+============================================================
+  전체 완료: 0초
