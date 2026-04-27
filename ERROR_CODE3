@@ -1,108 +1,18 @@
-H열엔 이게 출력해야함
-8293.94
-8117.88
-8178.61
-8177.65
-8169.32
-8059.11
-8086.09
-8193.29
-8198.9
-8160.64
-8203.81
-8213.57
-8159.93
-7914.36
-7903.65
-7955.88
-8107.16
-8177.82
-8170.42
-8132.13
-8325.24
-8294.43
-8316.23
-8223.57
-8093.58
 
-I열은 이게 출력해함
+    Size    :  245.00+ Bytes
+==================================================
 
-8206.96
-8050.28
-8111.4
-8118.16
-8104.4
-7996.6
-8020.95
-8129.26
-8149.85
-8112.89
-8147.84
-8153.48
-8098.93
-7859.48
-7850.62
-7890.74
-8041.75
-8120.71
-8107.98
-8047.67
-8210.96
-8197.04
-8226.09
-8143.93
-8038.76
-
-실제 출력 H열과 I 열
-
-8293.9 	8219.0 
-8346.9 	8050.3 
-8178.6 	8111.4 
-8177.7 	8332.2 
-8407.4 	8104.4 
-8059.1 	7996.6 
-8546.8 	8451.5 
-8193.3 	8129.3 
-8198.9 	8149.9 
-8683.1 	8578.5 
-8203.8 	8147.8 
-8213.6 	8569.7 
-8653.9 	8098.9 
-8157.6 	8121.0 
-8140.9 	7850.6 
-7955.9 	8136.8 
-8107.2 	8041.8 
-8335.7 	8267.9 
-8170.4 	8108.0 
-8325.2 	8247.8 
-8330.0 	8255.0 
-8294.4 	8197.0 
-7872.5 	8087.6 
-8223.6 	8143.9 
-8237.1 	8038.8 
-
-저 Print 실행시 
- 조회완료: 1251 rows, 16 columns
-⏱️  조회 소요시간: 125.7초
-        item_id subitem_id         step_seq    value    npw_wafer_id
-34   THK1_1_TOP         S1  SVC_PHDP_THK_20  8323.19  MPFT6A08001.02
-69   THK1_1_TOP         S1  SVC_PHDP_THK_20  8218.95  MPFT6A08001.03
-151  THK1_1_TOP         S1  SVC_PHDP_THK_20  8081.96  MPFT6A08010.05
-253  THK1_1_TOP         S1  SVC_PHDP_THK_20  7978.04  MPFT6A08001.01
-558  THK1_1_TOP         S1  SVC_PHDP_THK_20  8293.94  MPFT6A08001.02
-680  THK1_1_TOP         S1  SVC_PHDP_THK_20  8206.96  MPFT6A08001.03
-877  THK1_1_TOP         S1  SVC_PHDP_THK_20  8224.32  LPFT5F13011.03
-985  THK1_1_TOP         S1  SVC_PHDP_THK_20  8322.16  LPFT5F13011.02
-
-================================================================================
-  📋 조회된 데이터 요약
-================================================================================
-  NPW_DACUHDP8KLP           | 2026-04-22 15:46:57 | NPCC1158_3      | slot 3 | MTKP864
-  NPW_DACUHDP8KLP           | 2026-04-22 15:46:57 | NPCC1158_4      | slot 4 | MTKP864
-  NPW_HBMHDP8KW             | 2026-04-22 20:39:39 | NPCC1158_7      | slot 7 | MTKP861
-  NPW_HBMHDP8KW             | 2026-04-22 20:39:39 | NPCC1158_8      | slot 8 | MTKP861
-  TT_NPA_D1_DR_8KLP         | 2026-04-22 16:30:09 | NPC01440_9      | slot 9 | MTKP861
-  TT_NPA_D1_SR_8KLP         | 2026-04-22 17:33:00 | NPC01440_9      | slot 9 | MTKP864
-  TT_NPA_D2_DR_8KLP         | 2026-04-22 16:30:09 | NPC01440_10     | slot 10 | MTKP861
-  TT_NPA_D2_SR_8KLP         | 2026-04-22 17:33:00 | NPC01440_10     | slot 10 | MTKP864
-
+▶ 데이터 조회 중…
+❌ 오류 발생: ('HY000', '[HY000] [Cloudera][ImpalaODBC] (110) Error while executing a query in Impala: [HY000] : ParseException: Syntax error in line 36:\n       AND DA
+TE(A.dcol_time) = DATE(B.dcol_time)\n               ^\nEncountered: (\nExpected: STRING LITERAL\n\n\nCAUSED BY: Exception: Syntax error\n (110) (SQLExecDirectW)')     
+Traceback (most recent call last):
+  File "c:\Users\bgyu1.lim\Desktop\새 폴더\thk_backup.py", line 814, in main
+    df, latest_tkin_time = fetch_raw_data(
+  File "c:\Users\bgyu1.lim\Desktop\새 폴더\thk_backup.py", line 586, in fetch_raw_data
+    df = bdq.getData(query)
+  File "app\\src\\util.pyx", line 80, in util.Timer.__call__.wrapper
+  File "app\\src\\main.pyx", line 491, in main.getData
+  File "app\\src\\main.pyx", line 831, in main._getData_by_sql
+  File "app\\src\\main.pyx", line 400, in main._execute_sql
+  File "app\\src\\main.pyx", line 410, in main._execute_sql
+pyodbc.Error: ('HY000', '[HY000] [Cloudera][ImpalaODBC] (110) Error while executing a query in Impala: [HY000] : ParseException: Syntax error in line 36:\n       AND DATE(A.dcol_time) = DATE(B.dcol_time)\n               ^\nEncountered: (\nExpected: STRING LITERAL\n\n\nCAUSED BY: Exception: Syntax error\n (110) (SQLExecDirectW)')    
