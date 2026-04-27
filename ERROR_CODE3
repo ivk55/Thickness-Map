@@ -1,23 +1,192 @@
-✅ 조회완료: 270 rows, 16 columns
-           prc_ppid     item_id subitem_id         step_seq
-0   NPW_DACUHDP8KLP      GOF1_1      RANGE  SVC_PHDP_DUM_15
-1   NPW_DACUHDP8KLP      GOF1_1      RANGE  SVC_PHDP_DUM_30
-2   NPW_DACUHDP8KLP  THK1_1_TOP         S1  SVC_PHDP_DUM_15
-3   NPW_DACUHDP8KLP  THK1_1_TOP         S1  SVC_PHDP_DUM_30
-4   NPW_DACUHDP8KLP  THK1_1_TOP      RANGE  SVC_PHDP_DUM_15
-5   NPW_DACUHDP8KLP  THK1_1_TOP      RANGE  SVC_PHDP_DUM_30
-6   NPW_DACUHDP8KLP   THK1_1_L1         S1  SVC_PHDP_DUM_15
-7   NPW_DACUHDP8KLP   THK1_1_L1         S1  SVC_PHDP_DUM_30
-8   NPW_DACUHDP8KLP      GOF1_1         S1  SVC_PHDP_DUM_15
-9   NPW_DACUHDP8KLP      GOF1_1         S1  SVC_PHDP_DUM_30
-10  NPW_DACUHDP8KLP  THK1_1_TOP        AVG  SVC_PHDP_DUM_15
-11  NPW_DACUHDP8KLP  THK1_1_TOP        AVG  SVC_PHDP_DUM_30
-12  NPW_DACUHDP8KLP   THK1_1_L1        AVG  SVC_PHDP_DUM_15
-13  NPW_DACUHDP8KLP   THK1_1_L1        AVG  SVC_PHDP_DUM_30
-14  NPW_DACUHDP8KLP      GOF1_1        AVG  SVC_PHDP_DUM_15
-15  NPW_DACUHDP8KLP      GOF1_1        AVG  SVC_PHDP_DUM_30
-16  NPW_DACUHDP8KLP   THK1_1_L1      RANGE  SVC_PHDP_DUM_15
-17  NPW_DACUHDP8KLP   THK1_1_L1      RANGE  SVC_PHDP_DUM_30
-          prc_ppid         step_seq
-0  NPW_DACUHDP8KLP  SVC_PHDP_DUM_15
-1  NPW_DACUHDP8KLP  SVC_PHDP_DUM_30
+## Notice ###
+
+
+### Version ###
+Installed version of bigdataquery : 2.5.0
+Latest version of bigdataquery : 2.5.0
+
+### Power User ###
+You are the DataLake Poweruser. You can use SQL statements on getData()
+
+### Help ###
+Guide : https://go/data
+Functions:
+    __version__ : display current version of bigdataquery
+    getData() : extract data based on condition you passed (dictionary or SQL)
+    getTraceData() : extract FDC Trace data based on condition you passed (dictionary only)
+    getTableList() : search the table lists based on keyword
+    getColumnInfo() : search column information based on table name
+    login() : authenticate AD user and get token on server environment (server env only)
+    getTokenTime() : check the remaining token expiration time (server env only)
+    setDebugMode() : enable|disable mode to display detailed execution time of primary internal functions (getData only)
+    setTimeZone() : set timezone information of bigdataquery during runtime (IANA format)
+    getTimeZone() : get timezone information of bigdataquery (default: system local timezone)
+    exportDataDecorator() : extend the existing bigdataquery function to export segmented data as the desired output during runtime
+    setServerContext() : Set the server context for the client local environment to enable server-env-only functions such as login()
+
+
+THK Backup – 실시간(딜레이 0 h) 데이터를 DB에서 가져와 Excel에 저장
+설정 가능한 버전 - 새로운 설비/공정/셀 위치를 쉽게 추가할 수 있습니다
+
+================================================================================
+📋 설정 가능한 THK 백업 시스템
+📝 코드 상단의 설정 섹션에서 모든 설비/공정/셀 위치를 관리할 수 있습니다
+================================================================================
+================================================================================
+🏭 THK Backup – 실시간 데이터 백업 시스템
+================================================================================
+
+📋 사용 가능한 설비:
+   PHDP_DRAM: TAHP851, TAHP852, TAHP853, TAHP854, TAHP855, TAHP856, TAHP857
+   PHDP_FLASH: TAHP307, TAHP701, TAHP702, TAHP703, TAJP7U1, TAJP7U2, TAJP7U3
+   GT_NC: TAKP851, TAKP861
+
+🔧 사용할 장비를 입력 (쉼표 구분, 예: TAHP857 혹은 TAHP701,TAKP851): TAHP852
+   → 선택된 장비: ['TAHP852']
+
+🏠 사용 가능한 챔버: A, B, D
+🔧 사용할 챔버를 입력 (쉼표 구분, 예: A): B
+   → 선택된 챔버: ['B']
+
+🔧(선택) 컨테이너 ID 입력 (예: C001,C002, 없으면 전체):
+   → 선택된 컨테이너: 전체
+
+🔧(선택) SLOT 번호 입력 (예: 1,2,3, 없으면 전체):
+   → 선택된 SLOT: 전체
+
+================================================================================
+
+🔍 DB에서 데이터 조회 중...
+Query Executed Successfully...
+>> Execution Time: 4.676 sec
+==================================================
+    Rows    :  1
+    Columns :  1
+    Size    :  245.00+ Bytes
+==================================================
+
+▶ 데이터 조회 중…
+Query Executed Successfully...
+>> Execution Time: 14.564 sec
+==================================================
+    Rows    :  2592
+    Columns :  16
+    Size    :  74.19+ KB
+==================================================
+✅ 조회완료: 2592 rows, 16 columns
+         prc_ppid     item_id subitem_id         step_seq
+0   NPW_HBMHDP8KW   THK1_1_L1         S5  SVC_PHDP_THK_20
+1   NPW_HBMHDP8KW   THK1_1_L1         S5  SVC_PHDP_THK_30
+2   NPW_HBMHDP8KW  THK1_1_TOP        S13  SVC_PHDP_THK_20
+3   NPW_HBMHDP8KW  THK1_1_TOP        S13  SVC_PHDP_THK_30
+4   NPW_HBMHDP8KW   THK1_1_L1         S4  SVC_PHDP_THK_20
+5   NPW_HBMHDP8KW   THK1_1_L1         S4  SVC_PHDP_THK_30
+6   NPW_HBMHDP8KW   THK1_1_L1      RANGE  SVC_PHDP_THK_20
+7   NPW_HBMHDP8KW   THK1_1_L1      RANGE  SVC_PHDP_THK_30
+8   NPW_HBMHDP8KW      GOF1_1         S4  SVC_PHDP_THK_20
+9   NPW_HBMHDP8KW      GOF1_1         S4  SVC_PHDP_THK_30
+10  NPW_HBMHDP8KW      GOF1_1        S12  SVC_PHDP_THK_20
+11  NPW_HBMHDP8KW      GOF1_1        S12  SVC_PHDP_THK_30
+12  NPW_HBMHDP8KW   THK1_1_L1         S2  SVC_PHDP_THK_20
+13  NPW_HBMHDP8KW   THK1_1_L1         S2  SVC_PHDP_THK_30
+14  NPW_HBMHDP8KW  THK1_1_TOP        AVG  SVC_PHDP_THK_20
+15  NPW_HBMHDP8KW  THK1_1_TOP        AVG  SVC_PHDP_THK_30
+16  NPW_HBMHDP8KW      GOF1_1         S9  SVC_PHDP_THK_20
+17  NPW_HBMHDP8KW      GOF1_1         S9  SVC_PHDP_THK_30
+18  NPW_HBMHDP8KW  THK1_1_TOP        S11  SVC_PHDP_THK_20
+19  NPW_HBMHDP8KW  THK1_1_TOP        S11  SVC_PHDP_THK_30
+               prc_ppid         step_seq
+0         NPW_HBMHDP8KW  SVC_PHDP_THK_20
+1         NPW_HBMHDP8KW  SVC_PHDP_THK_30
+306     NPW_DACUHDP8KLP  SVC_PHDP_REG_45
+307     NPW_DACUHDP8KLP  SVC_PHDP_REG_60
+396   TT_NPA_D2_SR_8KLP  SVC_PHDP_DSR_40
+397   TT_NPA_D2_DR_8KLP  SVC_PHDP_DSR_20
+612     NPW_DACUHDP8KLP  SVC_PHDP_THK_30
+613     NPW_DACUHDP8KLP  SVC_PHDP_THK_20
+1008  TT_NPA_D1_SR_8KLP  SVC_PHDP_DSR_40
+1009  TT_NPA_D1_DR_8KLP  SVC_PHDP_DSR_20
+
+============================================================
+NPW_DACUHDP8KLP
+                 prc_tkin_time         prc_ppid          npw prc_slot_id   eqp_id         step_seq
+306  2026-04-18 13:16:40+00:00  NPW_DACUHDP8KLP  NPCC1188_13          13  MBPP751  SVC_PHDP_REG_45
+307  2026-04-18 13:16:40+00:00  NPW_DACUHDP8KLP  NPCC1188_13          13  MTKP861  SVC_PHDP_REG_60
+612  2026-04-22 15:46:57+00:00  NPW_DACUHDP8KLP   NPCC1158_3           3  MTKP864  SVC_PHDP_THK_30
+613  2026-04-22 15:46:57+00:00  NPW_DACUHDP8KLP   NPCC1158_3           3  MTKP864  SVC_PHDP_THK_20
+2394 2026-04-22 15:46:57+00:00  NPW_DACUHDP8KLP   NPCC1158_4           4  MTKP864  SVC_PHDP_THK_30
+2395 2026-04-22 15:46:57+00:00  NPW_DACUHDP8KLP   NPCC1158_4           4  MTKP864  SVC_PHDP_THK_20
+
+============================================================
+NPW_HBMHDP8K4W
+Empty DataFrame
+Columns: [prc_tkin_time, prc_ppid, npw, prc_slot_id, eqp_id, step_seq]
+Index: []
+
+📊 선택된 설비 타입: ['PHDP_DRAM']
+
+================================================================================
+  공정별 데이터 처리
+================================================================================
+
+🔹 NPW_DACUHDP8KLP 공정 처리 중...
+  📏 THK 측정 중...
+c:\Users\bgyu1.lim\Desktop\새 폴더\thk_backup.py:374: DeprecationWarning: is_categorical_dtype is deprecated and will be removed in a future version. Use isinstance(dtype, pd.CategoricalDtype) instead
+  if pd.api.types.is_categorical_dtype(latest[slot_col]):
+    ✅ 2/2 슬롯 데이터 수집 완료
+  📏 GOF 측정 중...
+c:\Users\bgyu1.lim\Desktop\새 폴더\thk_backup.py:374: DeprecationWarning: is_categorical_dtype is deprecated and will be removed in a future version. Use isinstance(dtype, pd.CategoricalDtype) instead
+  if pd.api.types.is_categorical_dtype(latest[slot_col]):
+    ✅ 2/2 슬롯 데이터 수집 완료
+  📏 RI 측정 중...
+c:\Users\bgyu1.lim\Desktop\새 폴더\thk_backup.py:374: DeprecationWarning: is_categorical_dtype is deprecated and will be removed in a future version. Use isinstance(dtype, pd.CategoricalDtype) instead   
+  if pd.api.types.is_categorical_dtype(latest[slot_col]):
+    ✅ 1/1 슬롯 데이터 수집 완료
+
+🔹 NPW_HBMHDP8KW 공정 처리 중...
+  📏 THK 측정 중...
+c:\Users\bgyu1.lim\Desktop\새 폴더\thk_backup.py:374: DeprecationWarning: is_categorical_dtype is deprecated and will be removed in a future version. Use isinstance(dtype, pd.CategoricalDtype) instead
+  if pd.api.types.is_categorical_dtype(latest[slot_col]):
+    ✅ 2/2 슬롯 데이터 수집 완료
+  📏 GOF 측정 중...
+c:\Users\bgyu1.lim\Desktop\새 폴더\thk_backup.py:374: DeprecationWarning: is_categorical_dtype is deprecated and will be removed in a future version. Use isinstance(dtype, pd.CategoricalDtype) instead   
+  if pd.api.types.is_categorical_dtype(latest[slot_col]):
+    ✅ 2/2 슬롯 데이터 수집 완료
+
+================================================================================
+  설비별 Excel 파일 저장
+================================================================================
+📁 PHDP_DRAM 설비 → PHDP_DRAM_BU_COMP_ver2.xlsx
+  ✅ 저장 완료: C:\Users\bgyu1.lim\Desktop\back_up_sheet\after\PHDP_DRAM_BU_COMP_ver2.xlsx
+
+================================================================================
+  📊 백업 완료 - 상세 결과
+================================================================================
+
+📁 설비 타입: PHDP_DRAM
+   파일: PHDP_DRAM_BU_COMP_ver2.xlsx
+
+🔹 공정: NPW_DACUHDP8KLP
+  Step SVC_PHDP_THK_20 | THK | Slot 1 (ID: 3) | 25개 데이터 → C89:C113 ✅
+  Step SVC_PHDP_THK_20 | THK | Slot 2 (ID: 4) | 25개 데이터 → D89:D113 ✅
+  Step SVC_PHDP_THK_20 | GOF | Slot 1 (ID: 3) | 25개 데이터 → E89:E113 ✅
+  Step SVC_PHDP_THK_20 | GOF | Slot 2 (ID: 4) | 25개 데이터 → F89:F113 ✅
+  Step SVC_PHDP_THK_30 | RI | Slot 1 (ID: 3) | 13개 데이터 → G89:G101 ✅
+
+🔹 공정: NPW_HBMHDP8KW
+  Step SVC_PHDP_THK_20 | THK | Slot 1 (ID: 7) | 25개 데이터 → H89:H113 ✅
+  Step SVC_PHDP_THK_20 | THK | Slot 2 (ID: 8) | 25개 데이터 → I89:I113 ✅
+  Step SVC_PHDP_THK_20 | GOF | Slot 1 (ID: 7) | 25개 데이터 → J89:J113 ✅
+  Step SVC_PHDP_THK_20 | GOF | Slot 2 (ID: 8) | 25개 데이터 → K89:K113 ✅
+────────────────────────────────────────────────────────────────────────────────
+🎉 THK Backup 자동화 성공!
+💾 저장된 파일: PHDP_DRAM_BU_COMP_ver2.xlsx
+📂 저장 위치: C:\Users\bgyu1.lim\Desktop\back_up_sheet\after
+📊 처리된 설비: ['PHDP_DRAM']
+🔧 처리된 공정: ['NPW_DACUHDP8KLP', 'NPW_HBMHDP8KW']
+
+💡 설정 힌트:
+   - 슬롯 순서 변경: PROCESS_CONFIGS에서 'slot_order' 수정
+   - 셀 위치 변경: EXCEL_CELL_MAPPING에서 셀 좌표 수정
+   - 새 설비 추가: 코드 상단의 설정 섹션 참고
+PS C:\Users\bgyu1.lim\AppData\Local\Programs\Microsoft VS Code> 
