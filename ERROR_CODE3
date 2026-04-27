@@ -1,109 +1,944 @@
- 오류 발생: 'prc_ppid'
-Traceback (most recent call last):
-  File "c:\Users\bgyu1.lim\Desktop\새 폴더\thk_backup.py", line 835, in main
-    for ppid, group in latest_summary.groupby("prc_ppid", observed=True):
-  File "C:\Users\bgyu1.lim\AppData\Local\aipforge\lib\site-packages\pandas\core\frame.py", line 9183, in groupby
-    return DataFrameGroupBy(
-  File "C:\Users\bgyu1.lim\AppData\Local\aipforge\lib\site-packages\pandas\core\groupby\groupby.py", line 1329, in __init__
-    grouper, exclusions, obj = get_grouper(
-  File "C:\Users\bgyu1.lim\AppData\Local\aipforge\lib\site-packages\pandas\core\groupby\grouper.py", line 1043, in get_grouper
-    raise KeyError(gpr)
-KeyError: 'prc_ppid'
-PS C:\Users\bgyu1.lim\AppData\Local\Programs\Microsoft VS Code> & conda run --live-stream --name base python "c:/Users/bgyu1.lim/Desktop/ /thk_backup.py"
-
-### Notice ###
-
-
-### Version ###
-Installed version of bigdataquery : 2.5.0
-Latest version of bigdataquery : 2.5.0
-
-### Power User ###
-You are the DataLake Poweruser. You can use SQL statements on getData()
-
-### Help ###
-Guide : https://go/data
-Functions:
-    __version__ : display current version of bigdataquery
-    getData() : extract data based on condition you passed (dictionary or SQL)
-    getTraceData() : extract FDC Trace data based on condition you passed (dictionary only)
-    getTableList() : search the table lists based on keyword
-    getColumnInfo() : search column information based on table name
-    login() : authenticate AD user and get token on server environment (server env only)
-    getTokenTime() : check the remaining token expiration time (server env only)
-    setDebugMode() : enable|disable mode to display detailed execution time of primary internal functions (getData only)
-    setTimeZone() : set timezone information of bigdataquery during runtime (IANA format)
-    getTimeZone() : get timezone information of bigdataquery (default: system local timezone)
-    exportDataDecorator() : extend the existing bigdataquery function to export segmented data as the desired output during runtime
-    setServerContext() : Set the server context for the client local environment to enable server-env-only functions such as login()
-
-
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
 THK Backup – 실시간(딜레이 0 h) 데이터를 DB에서 가져와 Excel에 저장
 설정 가능한 버전 - 새로운 설비/공정/셀 위치를 쉽게 추가할 수 있습니다
+"""
 
-================================================================================
-📋 설정 가능한 THK 백업 시스템
-📝 코드 상단의 설정 섹션에서 모든 설비/공정/셀 위치를 관리할 수 있습니다
-================================================================================
-================================================================================
-🏭 THK Backup – 실시간 데이터 백업 시스템
-================================================================================
+import sys
+import traceback
+import re
+from pathlib import Path
+from typing import List, Optional, Dict, Tuple
+from datetime import datetime
+import pandas as pd
+import xlwings as xw
+import bigdataquery as bdq   # AD 로그인 필요
 
-📋 사용 가능한 설비:
-   PHDP_DRAM: TAHP851, TAHP852, TAHP853, TAHP854, TAHP855, TAHP856, TAHP857
-   PHDP_FLASH: TAHP307, TAHP701, TAHP702, TAHP703, TAJP7U1, TAJP7U2, TAJP7U3
-   GT_NC: TAKP851, TAKP861
-   GT_CU: TAKP852, TAKP853, TAKP862, TAKP863, TAKP864, TAKP865, TAKP866, TAKP867
-   HITEOS: TATP871, TATP872, TATP873, TATP874
-   ALD_OX: TBLP3U4, TBLP3U5, TBLP7U1, TBLP7U2, TBLP7U3, TBLP7U4, TBLP7U5
+# ======================================================================
+# 🔧 설정 섹션
+# ======================================================================
 
-🔧 사용할 장비를 입력 (쉼표 구분, 예: TAHP857 혹은 TAHP701,TAKP851): tblp7u4
-   → 선택된 장비: ['TBLP7U4']
+BASE_DIR   = Path(r"C:\Users\bgyu1.lim\Desktop\back_up_sheet")
+BEFORE_DIR = BASE_DIR / "before"
+AFTER_DIR  = BASE_DIR / "after"
 
-🏠 사용 가능한 챔버: A, B, C, D, PM1, PM2, 1, 2
-🔧 사용할 챔버를 입력 (쉼표 구분, 예: A): 2
-   → 선택된 챔버: ['2']
+EQUIPMENT_FILES = {
+    "PHDP_DRAM": {
+        "src": BEFORE_DIR / "PHDP_DRAM_BU_SHEET_ver2.xlsx",
+        "dst": AFTER_DIR  / "PHDP_DRAM_BU_COMP_ver2.xlsx"
+    },
+    "PHDP_FLASH": {
+        "src": BEFORE_DIR / "PHDP_FLASH_BU_SHEET_ver2.xlsx",
+        "dst": AFTER_DIR  / "PHDP_FLASH_BU_COMP_ver2.xlsx"
+    },
+    "GT_NC": {
+        "src": BEFORE_DIR / "SIOC_NC_BU_SHEET_ver2.xlsx",
+        "dst": AFTER_DIR  / "SIOC_NC_BU_COMP_ver2.xlsx"
+    },
+    "GT_CU": {
+        "src": BEFORE_DIR / "SIOC_CU_BU_SHEET_ver2.xlsx",
+        "dst": AFTER_DIR  / "SIOC_CU_BU_COMP_ver2.xlsx"
+    },
+    "HITEOS": {
+        "src": BEFORE_DIR / "HITEOS_BU_SHEET.xlsx",
+        "dst": AFTER_DIR  / "HITEOS_BU_COMP.xlsx"
+    },
+    "ALD_OX": {
+        "src": BEFORE_DIR / "ALD_OX_BU_SHEET.xlsx",
+        "dst": AFTER_DIR  / "ALD_OX_BU_COMP.xlsx"
+    },
+}
 
-🔧(선택) 컨테이너 ID 입력 (예: C001,C002, 없으면 전체):
-   → 선택된 컨테이너: 전체
+EQUIPMENT_DEFINITIONS = {
+    "PHDP_DRAM": [
+        "TAHP851", "TAHP852", "TAHP853", "TAHP854", "TAHP855", "TAHP856", "TAHP857"
+    ],
+    "PHDP_FLASH": [
+        "TAHP307", "TAHP701", "TAHP702", "TAHP703", "TAJP7U1", "TAJP7U2", "TAJP7U3"
+    ],
+    "GT_NC": [
+        "TAKP851", "TAKP861"
+    ],
+    "GT_CU": [
+        "TAKP852", "TAKP853", "TAKP862", "TAKP863", "TAKP864", "TAKP865", "TAKP866", "TAKP867"
+    ],
+    "HITEOS": [
+        "TATP871", "TATP872", "TATP873", "TATP874"
+    ],
+    "ALD_OX": [
+        "TBLP3U4", "TBLP3U5", "TBLP7U1", "TBLP7U2", "TBLP7U3", "TBLP7U4", "TBLP7U5"
+    ],
+}
 
-🔧(선택) SLOT 번호 입력 (예: 1,2,3, 없으면 전체):
-   → 선택된 SLOT: 전체
+# ──────────────────────────────────────────────────────────────────────
+# slot 설정 가이드:
+#   slot_order  : 명시적으로 몇 번째 슬롯 쓸지 지정 (PHDP 계열)
+#                 예) [1, 2] → 정렬 후 1번째, 2번째 슬롯
+#   skip_slots  : 앞에서 몇 개 건너뛸지 (GT_CU, HITEOS, GT_NC 계열)
+#   take_slots  : skip 이후 몇 개 쓸지
+#                 예) skip=2, take=2 → 정렬 후 3,4번째 슬롯
+# ──────────────────────────────────────────────────────────────────────
 
-================================================================================
+PROCESS_CONFIGS = {
+    # ──────────────────────────────────────────
+    # PHDP_DRAM
+    # ──────────────────────────────────────────
+    "NPW_DACUHDP8KLP": {
+        "equipment_type": "PHDP_DRAM",
+        "measurements": {
+            "THK": {
+                "item_ids": ["THK1_1_TOP"],
+                "step_seq": ["SVC_PHDP_THK_20"],
+                "subitem_pattern": r"S0?([1-9]|[1-2][0-9]|25)",
+                "expected_count": 25,
+                "slot_order": [1, 2]
+            },
+            "GOF": {
+                "item_ids": ["GOF1_1"],
+                "step_seq": ["SVC_PHDP_THK_20"],
+                "subitem_pattern": r"S0?([1-9]|[1-2][0-9]|25)",
+                "expected_count": 25,
+                "slot_order": [1, 2]
+            },
+            "RI": {
+                "item_ids": ["RI1_1_L1"],
+                "step_seq": ["SVC_PHDP_THK_30"],
+                "subitem_pattern": r"S0?([1-9]|1[0-3])",
+                "expected_count": 13,
+                "slot_order": [1]
+            }
+        }
+    },
+    "NPW_HBMHDP8KW": {
+        "equipment_type": "PHDP_DRAM",
+        "measurements": {
+            "THK": {
+                "item_ids": ["THK1_1_TOP"],
+                "step_seq": ["SVC_PHDP_THK_20"],
+                "subitem_pattern": r"S0?([1-9]|[1-2][0-9]|25)",
+                "expected_count": 25,
+                "slot_order": [1, 2]
+            },
+            "GOF": {
+                "item_ids": ["GOF1_1"],
+                "step_seq": ["SVC_PHDP_THK_20"],
+                "subitem_pattern": r"S0?([1-9]|[1-2][0-9]|25)",
+                "expected_count": 25,
+                "slot_order": [1, 2]
+            }
+        }
+    },
 
-🔍 DB에서 데이터 조회 중...
-Query Executed Successfully...
->> Execution Time: 0.228 sec
-==================================================
-    Rows    :  1
-    Columns :  1
-    Size    :  245.00+ Bytes
-==================================================
+    # ──────────────────────────────────────────
+    # PHDP_FLASH
+    # ──────────────────────────────────────────
+    "NPW_VCUHDP8K": {
+        "equipment_type": "PHDP_FLASH",
+        "measurements": {
+            "THK": {
+                "item_ids": ["THK1_1_TOP"],
+                "step_seq": ["PVC_PHDP_THK_22"],
+                "subitem_pattern": r"S0?([1-9]|[1-2][0-9]|25)",
+                "expected_count": 25,
+                "slot_order": [1]
+            },
+            "GOF": {
+                "item_ids": ["GOF1_1"],
+                "step_seq": ["PVC_PHDP_THK_22"],
+                "subitem_pattern": r"S0?([1-9]|[1-2][0-9]|25)",
+                "expected_count": 25,
+                "slot_order": [1]
+            },
+            "RI": {
+                "item_ids": ["RI1_1_L1"],
+                "step_seq": ["PVC_PHDP_THK_26"],
+                "subitem_pattern": r"S0?([1-9]|[1-2][0-9]|25)",
+                "expected_count": 25,
+                "slot_order": [1]
+            }
+        }
+    },
 
-▶ 데이터 조회 중…
-Query Executed Successfully...
->> Execution Time: 24.910 sec
-==================================================
-    Rows    :  2970
-    Columns :  16
-    Size    :  83.64+ KB
-==================================================
-✅ 조회완료: 2970 rows, 16 columns
-⏱️  조회 소요시간: 25.5초
+    # ──────────────────────────────────────────
+    # GT_NC  (앞 2개 버리고 2개 사용)
+    # ──────────────────────────────────────────
+    "D1SIOC1.95KL": {
+        "equipment_type": "GT_NC",
+        "measurements": {
+            "THK": {
+                "item_ids": ["THK1_1_TOP"],
+                "step_seq": ["SVC_SIOC_THK_20"],
+                "subitem_pattern": r"S0?([1-9]|[1-2][0-9]|25)",
+                "expected_count": 25,
+                "skip_slots": 2, "take_slots": 2
+            },
+            "GOF": {
+                "item_ids": ["GOF1_1"],
+                "step_seq": ["SVC_SIOC_THK_20"],
+                "subitem_pattern": r"S0?([1-9]|[1-2][0-9]|25)",
+                "expected_count": 25,
+                "skip_slots": 2, "take_slots": 2
+            },
+            "RI": {
+                "item_ids": ["RI1_2_L1"],
+                "step_seq": ["SVC_SIOC_THK_20"],
+                "subitem_pattern": r"S0?([1-9]|[1-2][0-9]|25)",
+                "expected_count": 25,
+                "skip_slots": 2, "take_slots": 2
+            }
+        }
+    },
 
-================================================================================
-  📋 조회된 데이터 요약
-================================================================================
-❌ 오류 발생: 'prc_ppid'
-Traceback (most recent call last):
-  File "c:\Users\bgyu1.lim\Desktop\새 폴더\thk_backup.py", line 835, in main
-    for ppid, group in latest_summary.groupby("prc_ppid", observed=True):
-  File "C:\Users\bgyu1.lim\AppData\Local\aipforge\lib\site-packages\pandas\core\frame.py", line 9183, in groupby
-    return DataFrameGroupBy(
-  File "C:\Users\bgyu1.lim\AppData\Local\aipforge\lib\site-packages\pandas\core\groupby\groupby.py", line 1329, in __init__
-    grouper, exclusions, obj = get_grouper(
-  File "C:\Users\bgyu1.lim\AppData\Local\aipforge\lib\site-packages\pandas\core\groupby\grouper.py", line 1043, in get_grouper
-    raise KeyError(gpr)
-KeyError: 'prc_ppid'
-PS C:\Users\bgyu1.lim\AppData\Local\Programs\Microsoft VS Code> 
+    # ──────────────────────────────────────────
+    # GT_CU  (앞 2개 버리고 ppid별 2개씩)
+    # ──────────────────────────────────────────
+    "CUSIOC1.85KL": {
+        "equipment_type": "GT_CU",
+        "measurements": {
+            "THK": {
+                "item_ids": ["THK1_1_TOP"],
+                "step_seq": ["SVC_SIOC_THK_20"],
+                "subitem_pattern": r"S0?([1-9]|[1-2][0-9]|25)",
+                "expected_count": 25,
+                "skip_slots": 2, "take_slots": 2
+            },
+            "GOF": {
+                "item_ids": ["GOF1_1"],
+                "step_seq": ["SVC_SIOC_THK_20"],
+                "subitem_pattern": r"S0?([1-9]|[1-2][0-9]|25)",
+                "expected_count": 25,
+                "skip_slots": 2, "take_slots": 2
+            },
+            "RI": {
+                "item_ids": ["RI1_2_L1"],
+                "step_seq": ["SVC_SIOC_THK_20"],
+                "subitem_pattern": r"S0?([1-9]|[1-2][0-9]|25)",
+                "expected_count": 25,
+                "skip_slots": 2, "take_slots": 2
+            }
+        }
+    },
+    "CUSIOC3.5KL": {
+        "equipment_type": "GT_CU",
+        "measurements": {
+            "THK": {
+                "item_ids": ["THK1_1_TOP"],
+                "step_seq": ["SVC_SIOC_THK_20"],
+                "subitem_pattern": r"S0?([1-9]|[1-2][0-9]|25)",
+                "expected_count": 25,
+                "skip_slots": 2, "take_slots": 2
+            },
+            "GOF": {
+                "item_ids": ["GOF1_1"],
+                "step_seq": ["SVC_SIOC_THK_20"],
+                "subitem_pattern": r"S0?([1-9]|[1-2][0-9]|25)",
+                "expected_count": 25,
+                "skip_slots": 2, "take_slots": 2
+            },
+            "RI": {
+                "item_ids": ["RI1_2_L1"],
+                "step_seq": ["SVC_SIOC_THK_20"],
+                "subitem_pattern": r"S0?([1-9]|[1-2][0-9]|25)",
+                "expected_count": 25,
+                "skip_slots": 2, "take_slots": 2
+            }
+        }
+    },
+    "CUSIOC4.5KL": {
+        "equipment_type": "GT_CU",
+        "measurements": {
+            "THK": {
+                "item_ids": ["THK1_1_TOP"],
+                "step_seq": ["SVC_SIOC_THK_20"],
+                "subitem_pattern": r"S0?([1-9]|[1-2][0-9]|25)",
+                "expected_count": 25,
+                "skip_slots": 2, "take_slots": 2
+            },
+            "GOF": {
+                "item_ids": ["GOF1_1"],
+                "step_seq": ["SVC_SIOC_THK_20"],
+                "subitem_pattern": r"S0?([1-9]|[1-2][0-9]|25)",
+                "expected_count": 25,
+                "skip_slots": 2, "take_slots": 2
+            },
+            "RI": {
+                "item_ids": ["RI1_2_L1"],
+                "step_seq": ["SVC_SIOC_THK_20"],
+                "subitem_pattern": r"S0?([1-9]|[1-2][0-9]|25)",
+                "expected_count": 25,
+                "skip_slots": 2, "take_slots": 2
+            }
+        }
+    },
+    "TT_PWQ_GLUE": {
+        "equipment_type": "GT_CU",
+        "measurements": {
+            "PRE_THK": {
+                "item_ids": ["THK1_1_TOP"],
+                "step_seq": ["SVC_SIOC_GU_05"],
+                "subitem_pattern": r"S0?([1-9]|[1-2][0-9]|25)",
+                "expected_count": 25,
+                "slot_order": [1, 2]
+            },
+            "POST_THK": {
+                "item_ids": ["THK1_1_TOP"],
+                "step_seq": ["SVC_SIOC_GU_15"],
+                "subitem_pattern": r"S0?([1-9]|[1-2][0-9]|25)",
+                "expected_count": 25,
+                "slot_order": [1, 2]
+            }
+        }
+    },
+
+    # ──────────────────────────────────────────
+    # HITEOS  (앞 2개 버리고 ppid별 2개씩)
+    # ──────────────────────────────────────────
+    "CUTEOS56KD": {
+        "equipment_type": "HITEOS",
+        "measurements": {
+            "THK": {
+                "item_ids": ["THK1_1_TOP"],
+                "step_seq": ["SVC_TEOS_THKR_22"],
+                "subitem_pattern": r"S0?([1-9]|[1-2][0-9]|25)",
+                "expected_count": 25,
+                "skip_slots": 2, "take_slots": 2
+            },
+            "GOF": {
+                "item_ids": ["GOF1_1"],
+                "step_seq": ["SVC_TEOS_THKR_22"],
+                "subitem_pattern": r"S0?([1-9]|[1-2][0-9]|25)",
+                "expected_count": 25,
+                "skip_slots": 2, "take_slots": 2
+            }
+        }
+    },
+    "CUTEOS24KR": {
+        "equipment_type": "HITEOS",
+        "measurements": {
+            "THK": {
+                "item_ids": ["THK1_1_TOP"],
+                "step_seq": ["SVC_TEOS_THKR_22"],
+                "subitem_pattern": r"S0?([1-9]|[1-2][0-9]|25)",
+                "expected_count": 25,
+                "skip_slots": 2, "take_slots": 2
+            },
+            "GOF": {
+                "item_ids": ["GOF1_1"],
+                "step_seq": ["SVC_TEOS_THKR_22"],
+                "subitem_pattern": r"S0?([1-9]|[1-2][0-9]|25)",
+                "expected_count": 25,
+                "skip_slots": 2, "take_slots": 2
+            }
+        }
+    },
+    "CUTEOS38KLC": {
+        "equipment_type": "HITEOS",
+        "measurements": {
+            "THK": {
+                "item_ids": ["THK1_1_TOP"],
+                "step_seq": ["SVC_TEOS_THKR_22"],
+                "subitem_pattern": r"S0?([1-9]|[1-2][0-9]|25)",
+                "expected_count": 25,
+                "skip_slots": 2, "take_slots": 2
+            },
+            "GOF": {
+                "item_ids": ["GOF1_1"],
+                "step_seq": ["SVC_TEOS_THKR_22"],
+                "subitem_pattern": r"S0?([1-9]|[1-2][0-9]|25)",
+                "expected_count": 25,
+                "skip_slots": 2, "take_slots": 2
+            }
+        }
+    },
+
+    # ──────────────────────────────────────────
+    # ALD_OX  (slot 1,2,3,4 전부 사용)
+    # ──────────────────────────────────────────
+    "VALOX142": {
+        "equipment_type": "ALD_OX",
+        "measurements": {
+            "GOF": {
+                "item_ids": ["GOF1_1"],
+                "step_seq": ["PVM_ALD_THK_14"],
+                "subitem_pattern": r"S0?([1-9]|[1-2][0-9]|25)",
+                "expected_count": 25,
+                "slot_order": [1, 2, 3, 4]
+            },
+            "PRE_THK": {
+                "item_ids": ["THK1_1_TOP"],
+                "step_seq": ["PVM_ALD_THK_14"],
+                "subitem_pattern": r"S0?([1-9]|[1-2][0-9]|25)",
+                "expected_count": 25,
+                "slot_order": [1, 2, 3, 4]
+            },
+            "POST_THK": {
+                "item_ids": ["THK1_1_TOP"],
+                "step_seq": ["PVM_ALD_THK_24"],
+                "subitem_pattern": r"S0?([1-9]|[1-2][0-9]|25)",
+                "expected_count": 25,
+                "slot_order": [1, 2, 3, 4]
+            }
+        }
+    },
+}
+
+EXCEL_CELL_MAPPING = {
+    "PHDP_DRAM": {
+        "NPW_DACUHDP8KLP": {
+            "THK": ["C89", "D89"],
+            "GOF": ["E89", "F89"],
+            "RI":  ["G89"]
+        },
+        "NPW_HBMHDP8KW": {
+            "THK": ["H89", "I89"],
+            "GOF": ["J89", "K89"]
+        }
+    },
+    "PHDP_FLASH": {
+        "NPW_VCUHDP8K": {
+            "THK": ["C79"],
+            "GOF": ["D79"],
+            "RI":  ["E79"]
+        }
+    },
+    "GT_NC": {
+        "D1SIOC1.95KL": {
+            "THK": ["C71", "D71"],
+            "GOF": ["E71", "F71"],
+            "RI":  ["G71", "H71"]
+        }
+    },
+    "GT_CU": {
+        "CUSIOC1.85KL": {
+            "THK": ["C67", "D67"],
+            "GOF": ["E67", "F67"],
+            "RI":  ["G67", "H67"]
+        },
+        "CUSIOC3.5KL": {
+            "THK": ["I67", "J67"],
+            "GOF": ["K67", "L67"],
+            "RI":  ["M67", "N67"]
+        },
+        "CUSIOC4.5KL": {
+            "THK": ["O67", "P67"],
+            "GOF": ["Q67", "R67"],
+            "RI":  ["S67", "T67"]
+        },
+        "TT_PWQ_GLUE": {
+            "PRE_THK":  ["U67", "V67"],
+            "POST_THK": ["Y67", "Z67"]
+        }
+    },
+    "HITEOS": {
+        "CUTEOS56KD": {
+            "THK": ["C87", "D87"],
+            "GOF": ["E87", "F87"]
+        },
+        "CUTEOS24KR": {
+            "THK": ["G87", "H87"],
+            "GOF": ["I87", "J87"]
+        },
+        "CUTEOS38KLC": {
+            "THK": ["K87", "L87"],
+            "GOF": ["M87", "N87"]
+        }
+    },
+    "ALD_OX": {
+        "VALOX142": {
+            "GOF":      ["G52", "H52", "I52", "J52"],
+            "PRE_THK":  ["K52", "L52", "M52", "N52"],
+            "POST_THK": ["O52", "P52", "Q52", "R52"]
+        }
+    },
+}
+
+# ======================================================================
+# 🚀 메인 코드
+# ======================================================================
+
+def _to_upper_list(inp: str, allowed: List[str]) -> List[str]:
+    if not inp:
+        return []
+    return [x.upper() for x in inp.split(",") if x.strip().upper() in allowed]
+
+def select_equipment_and_chamber() -> Tuple[List[str], List[str], List[str], List[int]]:
+    all_equipment = []
+    for eq_type, eqp_list in EQUIPMENT_DEFINITIONS.items():
+        all_equipment.extend(eqp_list)
+
+    available_chambers = ["A", "B", "C", "D", "PM1", "PM2", "1", "2"]
+
+    print("=" * 80)
+    print("🏭 THK Backup – 실시간 데이터 백업 시스템")
+    print("=" * 80)
+    print(f"\n📋 사용 가능한 설비:")
+    for eq_type, eqp_list in EQUIPMENT_DEFINITIONS.items():
+        print(f"   {eq_type}: {', '.join(eqp_list)}")
+
+    equipment_input = input(
+        "\n🔧 사용할 장비를 입력 (쉼표 구분, 예: TAHP857 혹은 TAHP701,TAKP851): "
+    ).strip()
+    selected_eqp = _to_upper_list(equipment_input, all_equipment)
+    if not selected_eqp:
+        selected_eqp = ["TAHP857"]
+    print(f"   → 선택된 장비: {selected_eqp}")
+
+    print(f"\n🏠 사용 가능한 챔버: {', '.join(available_chambers)}")
+    chamber_input = input("🔧 사용할 챔버를 입력 (쉼표 구분, 예: A): ").strip()
+    selected_ch = _to_upper_list(chamber_input, available_chambers)
+    if not selected_ch:
+        selected_ch = ["A"]
+    print(f"   → 선택된 챔버: {selected_ch}")
+
+    container_input = input(
+        "\n🔧(선택) 컨테이너 ID 입력 (예: C001,C002, 없으면 전체): "
+    ).strip()
+    selected_cont = [c.strip() for c in container_input.split(",")] if container_input else []
+    print(f"   → 선택된 컨테이너: {selected_cont if selected_cont else '전체'}")
+
+    slot_input = input("\n🔧(선택) SLOT 번호 입력 (예: 1,2,3, 없으면 전체): ").strip()
+    selected_slots = [int(s) for s in slot_input.split(",") if s.strip().isdigit()] if slot_input else []
+    print(f"   → 선택된 SLOT: {selected_slots if selected_slots else '전체'}")
+    print("\n" + "=" * 80)
+
+    return selected_eqp, selected_ch, selected_cont, selected_slots
+
+def determine_equipment_type(eqp_id: str) -> str:
+    for eq_type, eqp_list in EQUIPMENT_DEFINITIONS.items():
+        if eqp_id in eqp_list:
+            return eq_type
+    return "UNKNOWN"
+
+def fetch_raw_data(
+    days: int = 14,
+    equipment_ids: List[str] | None = None,
+    chamber_ids: List[str] | None = None,
+    container_ids: List[str] | None = None,
+    slot_numbers: List[int] | None = None,
+) -> Tuple[pd.DataFrame, Optional[pd.Timestamp]]:
+    try:
+        bdq.getData("SELECT 1")
+    except Exception:
+        print("▶ AD 로그인 필요 → 터미널에 계정·비밀번호 입력")
+        bdq.login()
+
+    if equipment_ids is None:
+        equipment_ids = ["TAHP857"]
+    if chamber_ids is None:
+        chamber_ids = ["A"]
+    if container_ids is None:
+        container_ids = []
+    if slot_numbers is None:
+        slot_numbers = []
+
+    equip_str     = "','".join(equipment_ids)
+    chamber_str   = "','".join(chamber_ids)
+    container_str = "','".join(container_ids)
+    start_expr    = f"DATE_SUB(NOW(), INTERVAL {days} DAY)"
+    end_expr      = "NOW()"
+
+    slot_filter = ""
+    if slot_numbers:
+        slot_list = ",".join(map(str, slot_numbers))
+        slot_filter = f"AND A.prc_slot_id IN ({slot_list})"
+
+    query = f"""
+SELECT
+    A.prc_tkin_time, A.step_seq, A.eqp_id, A.tkin_time,
+    A.tkin_time AS metro_tkin_time, A.container_id, A.prc_eqp_id,
+    A.chamber_ids, A.prc_ppid, A.shelf_id, A.npw_wafer_id, A.prc_slot_id,
+    CONCAT(A.container_id, '_', A.shelf_id) AS npw,
+    B.item_id, B.subitem_id, B.value
+FROM
+( SELECT
+    npw_wafer_id, step_seq, eqp_id, tkin_time, container_id, prc_eqp_id,
+    prc_ppid, shelf_id, prc_tkin_time, dcol_time,
+    chamber_id_list AS chamber_ids, prc_slot_id
+  FROM yms_me_main_rt.sor_trk_fab_met_npw
+  WHERE dcol_time BETWEEN {start_expr} AND {end_expr}
+    AND (line_id LIKE 'P%' OR line_id LIKE 'K%')
+    AND SUBSTR(line_id,3,1) <> 'R'
+    AND prc_tkin_time BETWEEN {start_expr} AND {end_expr}
+    AND prc_eqp_id IN ('{equip_str}')
+    AND chamber_id_list IN ('{chamber_str}')
+    {"AND container_id IN ('" + container_str + "')" if container_str else ""}
+    {slot_filter}
+    AND shelf_id IS NOT NULL
+) A
+LEFT JOIN
+( SELECT
+    npw_wafer_id, step_seq, item_id, sub_item_id AS subitem_id,
+    item_value AS value, dcol_time
+  FROM yms_me_main_rt.sor_trk_fab_met_npw_msr
+  WHERE dcol_time BETWEEN {start_expr} AND {end_expr}
+    AND ( SUBSTR(item_id,1,2) IN ('TH','RI','RK','GO','B1','P1')
+          OR item_id IN ('WARPCF_X','BOW1_1') )
+    AND SUBSTR(sub_item_id,1,1) IN ('S','A','R')
+    AND sub_item_id NOT IN ('STD','SLOTID','SKEW')
+) B ON A.npw_wafer_id = B.npw_wafer_id
+       AND A.step_seq = B.step_seq
+WHERE B.item_id IS NOT NULL;
+"""
+
+    print("\n▶ 데이터 조회 중…")
+    df = bdq.getData(query)
+    print(f"✅ 조회완료: {len(df)} rows, {len(df.columns)} columns")
+
+    for col in ("prc_tkin_time", "dcol_time"):
+        if col in df.columns:
+            df[col] = pd.to_datetime(df[col], errors="coerce")
+            if df[col].dt.tz is None:
+                df[col] = df[col].dt.tz_localize("UTC")
+
+    fetch_ts = datetime.utcnow().replace(tzinfo=pd.Timestamp.utcnow().tz)
+    df["fetch_timestamp"] = fetch_ts
+
+    latest_tkin_time: Optional[pd.Timestamp] = None
+    if "tkin_time" in df.columns:
+        df["tkin_time"] = pd.to_datetime(df["tkin_time"], errors="coerce")
+        if df["tkin_time"].dt.tz is None:
+            df["tkin_time"] = df["tkin_time"].dt.tz_localize("UTC")
+        latest_tkin_time = df["tkin_time"].max()
+
+    return df, latest_tkin_time
+
+def _wafer_sort_key(wafer_id: str):
+    match = re.search(r"(\d+(?:\.\d+)?)\s*$", str(wafer_id))
+    if match:
+        num_str = match.group(1)
+        try:
+            return float(num_str) if "." in num_str else int(num_str)
+        except ValueError:
+            pass
+    return wafer_id
+
+def get_latest_wafer_data(
+    df: pd.DataFrame,
+    prc_ppid: str,
+    item_ids: List[str],
+    subitem_pattern: str,
+    expected_count: int,
+    step_seq_list: List[str],
+    measurement_config: dict,
+) -> Tuple[List[List[Optional[float]]], List[str]]:
+    """
+    slot_order  지정 시 → 정렬된 슬롯 목록에서 해당 인덱스(1-based) 사용
+    skip_slots + take_slots 지정 시 → 정렬 후 앞 skip개 제외, 다음 take개 사용
+    """
+    mask = (
+        (df["prc_ppid"] == prc_ppid)
+        & (df["item_id"].isin(item_ids))
+        & (df["subitem_id"].str.fullmatch(subitem_pattern))
+        & (df["step_seq"].isin(step_seq_list))
+    )
+    filtered = df.loc[mask].copy()
+    if filtered.empty:
+        n = measurement_config.get("take_slots", len(measurement_config.get("slot_order", [])))
+        print(f"⚠️ {prc_ppid} {item_ids} 데이터가 없습니다.")
+        return [[] for _ in range(n)], ["" for _ in range(n)]
+
+    latest_time = filtered["prc_tkin_time"].max()
+    latest = filtered[filtered["prc_tkin_time"] == latest_time].copy()
+
+    slot_col = "prc_slot_id" if "prc_slot_id" in latest.columns else "npw_wafer_id"
+    if slot_col not in latest.columns:
+        print("⚠️ 웨이퍼 구분 컬럼이 없습니다.")
+        n = measurement_config.get("take_slots", len(measurement_config.get("slot_order", [])))
+        return [[] for _ in range(n)], ["" for _ in range(n)]
+
+    if isinstance(latest[slot_col].dtype, pd.CategoricalDtype):
+        latest[slot_col] = latest[slot_col].cat.remove_unused_categories()
+    latest[slot_col] = latest[slot_col].astype(str)
+
+    slot_groups = latest.groupby(slot_col, observed=True)
+    slot_ids_all = sorted(slot_groups.groups.keys(), key=_wafer_sort_key)
+
+    # 슬롯 선택 방식 결정
+    if "skip_slots" in measurement_config:
+        skip = measurement_config["skip_slots"]
+        take = measurement_config["take_slots"]
+        slot_ids_selected = slot_ids_all[skip: skip + take]
+    else:
+        slot_order = measurement_config["slot_order"]
+        slot_ids_selected = [
+            slot_ids_all[i - 1] for i in slot_order if i <= len(slot_ids_all)
+        ]
+        # slot_order보다 실제 슬롯이 부족하면 빈 값으로 채움
+        while len(slot_ids_selected) < len(slot_order):
+            slot_ids_selected.append(None)
+
+    result_wafers = []
+    wafer_ids = []
+
+    for slot_id in slot_ids_selected:
+        if slot_id is None:
+            result_wafers.append([])
+            wafer_ids.append("")
+            continue
+
+        wafer = slot_groups.get_group(slot_id).copy()
+        wafer_ids.append(slot_id)
+
+        wafer["sub_num"] = wafer["subitem_id"].str.extract(r"S0?(\d+)").astype(int)
+        wafer = wafer.sort_values("sub_num")
+
+        values = []
+        for j in range(1, expected_count + 1):
+            row = wafer[wafer["sub_num"] == j]
+            if not row.empty:
+                raw_val = row["value"].iloc[0]
+                if pd.isna(raw_val) or raw_val in ("", "NULL"):
+                    values.append(None)
+                else:
+                    try:
+                        values.append(float(raw_val))
+                    except (ValueError, TypeError):
+                        values.append(None)
+            else:
+                values.append(None)
+        result_wafers.append(values)
+
+    return result_wafers, wafer_ids
+
+def print_clean_separator(title: str = "", width: int = 80) -> None:
+    if title:
+        print(f"\n{'=' * width}")
+        print(f"  {title}")
+        print(f"{'=' * width}")
+    else:
+        print(f"{'─' * width}")
+
+def print_step_result(step_name: str, item_type: str, slot_num: int, slot_id: str,
+                      data_count: int, cell_range: str, valid_count: int = None) -> None:
+    status_icon = "✅" if (valid_count or data_count) > 0 else "❌"
+    print(f"  Step {step_name} | {item_type} | Slot {slot_num} (ID: {slot_id}) | {data_count}개 데이터 → {cell_range} {status_icon}")
+    if valid_count is not None and valid_count < data_count:
+        missing = data_count - valid_count
+        print(f"    ⚠️  누락된 데이터: {missing}개")
+
+def get_cell_range_from_start(start_cell: str, count: int) -> str:
+    match = re.match(r"([A-Z]+)(\d+)", start_cell)
+    if not match:
+        return start_cell
+    col, row = match.groups()
+    start_row = int(row)
+    end_row = start_row + count - 1
+    return f"{col}{start_row}:{col}{end_row}"
+
+def write_to_excel_by_equipment(
+    all_data: Dict[str, Dict[str, List[List[Optional[float]]]]],
+    equipment_types: Dict[str, List[str]],
+    fetch_timestamp: datetime,
+    tkin_timestamp: Optional[pd.Timestamp] = None,
+) -> Dict[str, Dict[str, Dict[str, List[str]]]]:
+
+    written_cells_by_equipment = {}
+
+    for eq_type, eqp_list in equipment_types.items():
+        if eq_type not in EQUIPMENT_FILES:
+            print(f"⚠️ {eq_type}에 해당하는 Excel 파일이 없습니다.")
+            continue
+
+        src_file = EQUIPMENT_FILES[eq_type]["src"]
+        dst_file = EQUIPMENT_FILES[eq_type]["dst"]
+
+        if not src_file.exists():
+            print(f"❌ 원본 파일이 없습니다: {src_file}")
+            continue
+
+        dst_file.parent.mkdir(parents=True, exist_ok=True)
+        print(f"📁 {eq_type} 설비 → {dst_file.name}")
+        written_cells_by_equipment[eq_type] = {}
+
+        app = xw.App(visible=False)
+        try:
+            wb = app.books.open(str(src_file))
+            sht = wb.sheets[0]
+
+            sht.range("A1").value = f"Data fetched (UTC) : {fetch_timestamp}"
+            if tkin_timestamp is not None:
+                sht.range("B1").value = f"Latest tkin_time (UTC) : {tkin_timestamp}"
+            else:
+                sht.range("B1").value = "Latest tkin_time (UTC) : N/A"
+
+            eq_cell_mapping = EXCEL_CELL_MAPPING.get(eq_type, {})
+
+            for prc_ppid, items in all_data.items():
+                if prc_ppid not in eq_cell_mapping:
+                    continue
+
+                written_cells_by_equipment[eq_type][prc_ppid] = {}
+
+                for item_type, wafer_lists in items.items():
+                    if item_type not in eq_cell_mapping[prc_ppid]:
+                        continue
+
+                    cells = eq_cell_mapping[prc_ppid][item_type]
+                    written_cells_by_equipment[eq_type][prc_ppid][item_type] = []
+
+                    for wafer_idx, (cell, values) in enumerate(zip(cells, wafer_lists)):
+                        if not values:
+                            written_cells_by_equipment[eq_type][prc_ppid][item_type].append("")
+                            continue
+
+                        excel_vals = [v if v is not None else "" for v in values]
+                        sht.range(cell).options(transpose=True).value = excel_vals
+
+                        data_count = len(values)
+                        cell_range = get_cell_range_from_start(cell, data_count)
+                        written_cells_by_equipment[eq_type][prc_ppid][item_type].append(cell_range)
+
+            wb.save(str(dst_file))
+            print(f"  ✅ 저장 완료: {dst_file}")
+
+        except Exception as e:
+            print(f"  ❌ {eq_type} Excel 쓰기 오류: {e}")
+            raise
+        finally:
+            wb.close()
+            app.quit()
+
+    return written_cells_by_equipment
+
+def main() -> None:
+    DAYS = 14
+    STRICT = False
+
+    try:
+        selected_eqp, selected_ch, selected_cont, selected_slots = select_equipment_and_chamber()
+
+        print("\n🔍 DB에서 데이터 조회 중...")
+        t_start = datetime.now()
+        df, latest_tkin_time = fetch_raw_data(
+            days=DAYS,
+            equipment_ids=selected_eqp,
+            chamber_ids=selected_ch,
+            container_ids=selected_cont,
+            slot_numbers=selected_slots,
+        )
+        t_end = datetime.now()
+        print(f"⏱️  조회 소요시간: {(t_end - t_start).total_seconds():.1f}초")
+
+        if df.empty:
+            print("❌ 조회된 데이터가 없습니다.")
+            return
+
+        # ── 조회 데이터 요약 출력 ──────────────────────────────
+        print_clean_separator("📋 조회된 데이터 요약")
+        summary_cols = ["prc_tkin_time", "prc_ppid", "npw", "eqp_id", "prc_slot_id"]
+        summary = df[summary_cols].drop_duplicates().sort_values(["prc_ppid", "prc_tkin_time", "prc_slot_id"])
+        for ppid, grp in summary.groupby("prc_ppid", observed=True):
+            latest_time = grp["prc_tkin_time"].max()
+            for _, row in grp[grp["prc_tkin_time"] == latest_time].iterrows():
+                tkin = str(row["prc_tkin_time"])[:19]
+                print(f"  {ppid:<25} | {tkin} | {str(row['npw']):<15} | slot {row['prc_slot_id']} | {row['eqp_id']}")
+        print()
+
+        equipment_types = {}
+        for eqp in selected_eqp:
+            eq_type = determine_equipment_type(eqp)
+            if eq_type not in equipment_types:
+                equipment_types[eq_type] = []
+            equipment_types[eq_type].append(eqp)
+
+        print(f"\n📊 선택된 설비 타입: {list(equipment_types.keys())}")
+
+        all_data: Dict[str, Dict[str, List[List[Optional[float]]]]] = {}
+        all_wafer_ids: Dict[str, Dict[str, List[str]]] = {}
+
+        print_clean_separator("공정별 데이터 처리")
+
+        for prc_ppid, process_config in PROCESS_CONFIGS.items():
+            eq_type_required = process_config["equipment_type"]
+            if eq_type_required not in equipment_types:
+                continue
+
+            print(f"\n🔹 {prc_ppid} 공정 처리 중...")
+            process_data = {}
+            process_wafer_ids = {}
+
+            for measurement_type, measurement_config in process_config["measurements"].items():
+                print(f"  📏 {measurement_type} 측정 중...")
+
+                item_ids        = measurement_config["item_ids"]
+                step_seq        = measurement_config["step_seq"]
+                subitem_pattern = measurement_config["subitem_pattern"]
+                expected_count  = measurement_config["expected_count"]
+
+                wafer_values, wafer_ids = get_latest_wafer_data(
+                    df, prc_ppid, item_ids, subitem_pattern,
+                    expected_count, step_seq, measurement_config
+                )
+
+                process_data[measurement_type] = wafer_values
+                process_wafer_ids[measurement_type] = wafer_ids
+
+                valid_slots = sum(1 for values in wafer_values if values)
+                print(f"    ✅ {valid_slots}/{len(wafer_values)} 슬롯 데이터 수집 완료")
+
+            all_data[prc_ppid] = process_data
+            all_wafer_ids[prc_ppid] = process_wafer_ids
+
+        if all_data:
+            fetch_ts = df["fetch_timestamp"].iloc[0]
+            print_clean_separator("설비별 Excel 파일 저장")
+
+            written_cells_by_equipment = write_to_excel_by_equipment(
+                all_data, equipment_types, fetch_timestamp=fetch_ts, tkin_timestamp=latest_tkin_time
+            )
+
+            print_clean_separator("📊 백업 완료 - 상세 결과")
+
+            for eq_type in equipment_types.keys():
+                if eq_type in written_cells_by_equipment:
+                    print(f"\n📁 설비 타입: {eq_type}")
+                    print(f"   파일: {EQUIPMENT_FILES[eq_type]['dst'].name}")
+
+                    for prc_ppid, process_data in written_cells_by_equipment[eq_type].items():
+                        print(f"\n🔹 공정: {prc_ppid}")
+
+                        for item_type, cell_ranges in process_data.items():
+                            p_cfg  = PROCESS_CONFIGS.get(prc_ppid, {})
+                            m_cfg  = p_cfg.get("measurements", {}).get(item_type, {})
+                            step_name = m_cfg.get("step_seq", ["UNKNOWN"])[0]
+
+                            wafer_ids  = all_wafer_ids.get(prc_ppid, {}).get(item_type, [])
+                            wafer_data = all_data.get(prc_ppid, {}).get(item_type, [])
+
+                            for slot_idx, (cell_range, slot_data) in enumerate(zip(cell_ranges, wafer_data)):
+                                if cell_range and slot_data:
+                                    slot_id     = wafer_ids[slot_idx] if slot_idx < len(wafer_ids) else "N/A"
+                                    valid_count = sum(1 for v in slot_data if v is not None)
+                                    data_count  = len(slot_data)
+                                    print_step_result(
+                                        step_name, item_type, slot_idx + 1, slot_id,
+                                        data_count, cell_range, valid_count
+                                    )
+
+            print_clean_separator()
+            print("🎉 THK Backup 자동화 성공!")
+            saved_files = [EQUIPMENT_FILES[eq_type]['dst'].name for eq_type in equipment_types.keys() if eq_type in EQUIPMENT_FILES]
+            print(f"💾 저장된 파일: {', '.join(saved_files)}")
+            print(f"📂 저장 위치: {AFTER_DIR}")
+            print(f"📊 처리된 설비: {list(equipment_types.keys())}")
+            print(f"🔧 처리된 공정: {list(all_data.keys())}")
+            print(f"\n💡 설정 힌트:")
+            print(f"   - skip/take 변경: PROCESS_CONFIGS에서 skip_slots, take_slots 수정")
+            print(f"   - 셀 위치 변경: EXCEL_CELL_MAPPING에서 셀 좌표 수정")
+            print(f"   - 새 설비 추가: 코드 상단의 설정 섹션 참고")
+        else:
+            print("\n⚠️ 저장할 데이터가 없습니다.")
+
+    except Exception as exc:
+        print(f"❌ 오류 발생: {exc}", file=sys.stderr)
+        traceback.print_exc()
+
+
+if __name__ == "__main__":
+    print(__doc__)
+    print("=" * 80)
+    print("📋 설정 가능한 THK 백업 시스템")
+    print("📝 코드 상단의 설정 섹션에서 모든 설비/공정/셀 위치를 관리할 수 있습니다")
+    print("=" * 80)
+    main()
