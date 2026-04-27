@@ -1,362 +1,81 @@
-설정은 동일하지만 데이터가 다르게 나옵니다.
+ 조회완료: 1251 rows, 16 columns
+⏱️  조회 소요시간: 10.0초
+     subitem_id         step_seq     value prc_slot_id
+984         AVG  SVC_PHDP_THK_30     1.453           1
+985         AVG  SVC_PHDP_THK_30     0.974           1
+989         AVG  SVC_PHDP_THK_30  8272.160           1
+1102        AVG  SVC_PHDP_THK_20     0.993           1
+1118        AVG  SVC_PHDP_THK_20  8202.990           1
+967       RANGE  SVC_PHDP_THK_30     0.006           1
+990       RANGE  SVC_PHDP_THK_30   458.660           1
+996       RANGE  SVC_PHDP_THK_30     0.005           1
+1114      RANGE  SVC_PHDP_THK_20     0.001           1
+1141      RANGE  SVC_PHDP_THK_20   432.100           1
+958          S1  SVC_PHDP_THK_30     0.971           1
+962          S1  SVC_PHDP_THK_30     1.457           1
+969          S1  SVC_PHDP_THK_30  8059.700           1
+1129         S1  SVC_PHDP_THK_20  8322.160           1
+1140         S1  SVC_PHDP_THK_20     0.993           1
+965         S10  SVC_PHDP_THK_30  8241.330           1
+970         S10  SVC_PHDP_THK_30     1.453           1
+995         S10  SVC_PHDP_THK_30     0.974           1
+1100        S10  SVC_PHDP_THK_20  8199.160           1
+1127        S10  SVC_PHDP_THK_20     0.992           1
 
-🎯 가능한 원인
-1. 슬롯 ID 정렬 문제 (가장 유력)
-_wafer_sort_key 함수가 슬롯 ID를 정렬할 때, 슬롯 ID의 형식에 따라 예상치 못한 순서로 정렬될 수 있습니다.
+================================================================================
+  📋 조회된 데이터 요약
+================================================================================
+  NPW_DACUHDP8KLP           | 2026-04-22 15:46:57 | NPCC1158_3      | slot 3 | MTKP864
+  NPW_DACUHDP8KLP           | 2026-04-22 15:46:57 | NPCC1158_4      | slot 4 | MTKP864
+  NPW_HBMHDP8KW             | 2026-04-22 20:39:39 | NPCC1158_7      | slot 7 | MTKP861
+  NPW_HBMHDP8KW             | 2026-04-22 20:39:39 | NPCC1158_8      | slot 8 | MTKP861
+  TT_NPA_D1_DR_8KLP         | 2026-04-22 16:30:09 | NPC01440_9      | slot 9 | MTKP861
+  TT_NPA_D1_SR_8KLP         | 2026-04-22 17:33:00 | NPC01440_9      | slot 9 | MTKP864
+  TT_NPA_D2_DR_8KLP         | 2026-04-22 16:30:09 | NPC01440_10     | slot 10 | MTKP861
+  TT_NPA_D2_SR_8KLP         | 2026-04-22 17:33:00 | NPC01440_10     | slot 10 | MTKP864
 
-Python
 
-Apply
-def _wafer_sort_key(wafer_id: str):
-    match = re.search(r"(\d+(?:\.\d+)?)\s*$", str(wafer_id))
-    if match:
-        num_str = match.group(1)
-        try:
-            return float(num_str) if "." in num_str else int(num_str)
-        except ValueError:
-            pass
-    return wafer_id
-문제 시나리오:
+📊 선택된 설비 타입: ['PHDP_DRAM']
 
-슬롯 ID가 "1", "2", "10", "11" 형태인 경우
-문자열 정렬: "1", "10", "11", "2" (잘못됨)
-숫자 정렬: 1, 2, 10, 11 (올바름)
-2. 데이터 중복
-동일한 subitem_id에 여러 개의 데이터가 있을 때, 첫 번째 값만 가져옵니다.
+================================================================================
+  공정별 데이터 처리
+================================================================================
 
-Python
+🔹 NPW_DACUHDP8KLP 공정 처리 중...
+  📏 THK 측정 중...
+    ✅ 2/2 슬롯 데이터 수집 완료
+  📏 GOF 측정 중...
+    ✅ 2/2 슬롯 데이터 수집 완료
+  📏 RI 측정 중...
+    ✅ 1/1 슬롯 데이터 수집 완료
 
-Apply
-for j in range(1, expected_count + 1):
-    row = wafer[wafer["sub_num"] == j]
-    if not row.empty:
-        raw_val = row["value"].iloc[0]  # ← 첫 번째 값만 가져옴
-3. subitem_id 패턴 매칭 문제
-subitem_pattern이 일부 데이터와 매칭되지 않을 수 있습니다.
+🔹 NPW_HBMHDP8KW 공정 처리 중...
+  📏 THK 측정 중...
+    ✅ 2/2 슬롯 데이터 수집 완료
+  📏 GOF 측정 중...
+    ✅ 2/2 슬롯 데이터 수집 완료
 
-✅ 해결 방법
-방법 1: 디버깅 출력 추가 (권장)
-get_latest_wafer_data 함수에 디버깅 출력을 추가:
+================================================================================
+  설비별 Excel 파일 저장
+================================================================================
+📁 PHDP_DRAM 설비 → PHDP_DRAM_BU_COMP_ver2.xlsx
+  ✅ 저장 완료: C:\Users\bgyu1.lim\Desktop\back_up_sheet\after\PHDP_DRAM_BU_COMP_ver2.xlsx
 
-Python
+================================================================================
+  📊 백업 완료 - 상세 결과
+================================================================================
 
-Apply
-def get_latest_wafer_data(
-    df: pd.DataFrame,
-    prc_ppid: str,
-    item_ids: List[str],
-    subitem_pattern: str,
-    expected_count: int,
-    step_seq_list: List[str],
-    measurement_config: dict,
-) -> Tuple[List[List[Optional[float]]], List[str]]:
-    """
-    slot_order  지정 시 → 정렬된 슬롯 목록에서 해당 인덱스(1-based) 사용
-    skip_slots + take_slots 지정 시 → 정렬 후 앞 skip개 제외, 다음 take개 사용
-    """
-    mask = (
-        (df["prc_ppid"] == prc_ppid)
-        & (df["item_id"].isin(item_ids))
-        & (df["subitem_id"].str.fullmatch(subitem_pattern))
-        & (df["step_seq"].isin(step_seq_list))
-    )
-    filtered = df.loc[mask].copy()
-    
-    # 디버깅: 필터링된 데이터 확인
-    print(f"    🔍 {prc_ppid} {item_ids} 필터링 결과: {len(filtered)} rows")
-    if not filtered.empty:
-        print(f"       prc_tkin_time 범위: {filtered['prc_tkin_time'].min()} ~ {filtered['prc_tkin_time'].max()}")
-        print(f"       고유 subitem_id: {sorted(filtered['subitem_id'].unique())}")
-        print(f"       고유 slot_id: {sorted(filtered['prc_slot_id'].unique())}")
-    
-    if filtered.empty:
-        n = measurement_config.get("take_slots", len(measurement_config.get("slot_order", [])))
-        print(f"⚠️ {prc_ppid} {item_ids} 데이터가 없습니다.")
-        return [[] for _ in range(n)], ["" for _ in range(n)]
-    
-    latest_time = filtered["prc_tkin_time"].max()
-    latest = filtered[filtered["prc_tkin_time"] == latest_time].copy()
-    
-    # 디버깅: 최신 데이터 확인
-    print(f"    📅 최신 시간: {latest_time}")
-    print(f"       최신 데이터: {len(latest)} rows")
-    print(f"       최신 데이터의 slot_id: {sorted(latest['prc_slot_id'].unique())}")
-    
-    slot_col = "prc_slot_id" if "prc_slot_id" in latest.columns else "npw_wafer_id"
-    if slot_col not in latest.columns:
-        print("⚠️ 웨이퍼 구분 컬럼이 없습니다.")
-        n = measurement_config.get("take_slots", len(measurement_config.get("slot_order", [])))
-        return [[] for _ in range(n)], ["" for _ in range(n)]
-    
-    if isinstance(latest[slot_col].dtype, pd.CategoricalDtype):
-        latest[slot_col] = latest[slot_col].cat.remove_unused_categories()
-    latest[slot_col] = latest[slot_col].astype(str)
-    
-    slot_groups = latest.groupby(slot_col, observed=True)
-    slot_ids_all = sorted(slot_groups.groups.keys(), key=_wafer_sort_key)
-    
-    # 디버깅: 슬롯 정렬 확인
-    print(f"    🎯 정렬된 슬롯 ID: {slot_ids_all}")
-    
-    # 슬롯 선택 방식 결정
-    if "skip_slots" in measurement_config:
-        skip = measurement_config["skip_slots"]
-        take = measurement_config["take_slots"]
-        slot_ids_selected = slot_ids_all[skip: skip + take]
-    else:
-        slot_order = measurement_config["slot_order"]
-        slot_ids_selected = [
-            slot_ids_all[i - 1] for i in slot_order if i <= len(slot_ids_all)
-        ]
-        # slot_order보다 실제 슬롯이 부족하면 빈 값으로 채움
-        while len(slot_ids_selected) < len(slot_order):
-            slot_ids_selected.append(None)
-    
-    # 디버깅: 선택된 슬롯 확인
-    print(f"    ✅ 선택된 슬롯: {slot_ids_selected}")
-    
-    result_wafers = []
-    wafer_ids = []
-    
-    for slot_idx, slot_id in enumerate(slot_ids_selected):
-        if slot_id is None:
-            result_wafers.append([])
-            wafer_ids.append("")
-            continue
-        
-        wafer = slot_groups.get_group(slot_id).copy()
-        wafer_ids.append(slot_id)
-        wafer["sub_num"] = wafer["subitem_id"].str.extract(r"S0?(\d+)").astype(int)
-        wafer = wafer.sort_values("sub_num")
-        
-        # 디버깅: 웨이퍼 데이터 확인
-        print(f"       Slot {slot_idx + 1} (ID: {slot_id}): {len(wafer)} rows")
-        print(f"          sub_num 범위: {wafer['sub_num'].min()} ~ {wafer['sub_num'].max()}")
-        print(f"          subitem_id: {sorted(wafer['subitem_id'].tolist())}")
-        
-        values = []
-        for j in range(1, expected_count + 1):
-            row = wafer[wafer["sub_num"] == j]
-            if not row.empty:
-                raw_val = row["value"].iloc[0]
-                if pd.isna(raw_val) or raw_val in ("", "NULL"):
-                    values.append(None)
-                else:
-                    try:
-                        values.append(float(raw_val))
-                    except (ValueError, TypeError):
-                        values.append(None)
-            else:
-                values.append(None)
-        
-        # 디버깅: 값 확인
-        non_null_count = sum(1 for v in values if v is not None)
-        print(f"          데이터: {non_null_count}/{expected_count}개 유효")
-        if non_null_count > 0:
-            print(f"          값: {[v for v in values if v is not None][:5]}...")  # 처음 5개만
-        
-        result_wafers.append(values)
-    
-    return result_wafers, wafer_ids
-방법 2: 슬롯 ID 정렬 개선
-_wafer_sort_key 함수를 개선:
+📁 설비 타입: PHDP_DRAM
+   파일: PHDP_DRAM_BU_COMP_ver2.xlsx
 
-Python
+🔹 공정: NPW_DACUHDP8KLP
+  Step SVC_PHDP_THK_20 | THK | Slot 1 (ID: 3) | 25개 데이터 → C89:C113 ✅
+  Step SVC_PHDP_THK_20 | THK | Slot 2 (ID: 4) | 25개 데이터 → D89:D113 ✅
+  Step SVC_PHDP_THK_20 | GOF | Slot 1 (ID: 3) | 25개 데이터 → E89:E113 ✅
+  Step SVC_PHDP_THK_20 | GOF | Slot 2 (ID: 4) | 25개 데이터 → F89:F113 ✅
+  Step SVC_PHDP_THK_30 | RI | Slot 1 (ID: 3) | 13개 데이터 → G89:G101 ✅
 
-Apply
-def _wafer_sort_key(wafer_id: str):
-    """웨이퍼 ID 정렬용 키 생성 - 개선된 버전"""
-    wafer_id_str = str(wafer_id).strip()
-    
-    # 1. 숫자로 시작하는 경우 (예: "1", "2", "10")
-    if wafer_id_str.isdigit():
-        return (0, int(wafer_id_str))
-    
-    # 2. 소수점이 있는 경우 (예: "1.5", "2.3")
-    try:
-        num = float(wafer_id_str)
-        if not num.is_integer():
-            return (1, num)
-    except ValueError:
-        pass
-    
-    # 3. 숫자로 끝나는 경우 (예: "Slot1", "W1")
-    match = re.search(r"(\d+(?:\.\d+)?)\s*$", wafer_id_str)
-    if match:
-        num_str = match.group(1)
-        try:
-            num = float(num_str) if "." in num_str else int(num_str)
-            return (2, num)
-        except ValueError:
-            pass
-    
-    # 4. 그 외 (문자열 그대로)
-    return (3, wafer_id_str)
-방법 3: 데이터 중복 처리
-동일한 subitem_id에 여러 개의 데이터가 있는 경우, 평균값을 사용:
-
-Python
-
-Apply
-# values 추출 부분 수정
-values = []
-for j in range(1, expected_count + 1):
-    rows = wafer[wafer["sub_num"] == j]
-    if not rows.empty:
-        # 여러 개의 데이터가 있으면 평균값 사용
-        raw_vals = rows["value"].dropna()
-        if len(raw_vals) > 1:
-            print(f"          ⚠️  sub_num={j}에 {len(raw_vals)}개 데이터 있음 → 평균값 사용")
-            avg_val = raw_vals.astype(float).mean()
-            values.append(avg_val)
-        elif len(raw_vals) == 1:
-            raw_val = raw_vals.iloc[0]
-            if pd.isna(raw_val) or raw_val in ("", "NULL"):
-                values.append(None)
-            else:
-                try:
-                    values.append(float(raw_val))
-                except (ValueError, TypeError):
-                    values.append(None)
-        else:
-            values.append(None)
-    else:
-        values.append(None)
-🎯 추천 해결 순서
-방법 1 적용: 디버깅 출력 추가 후 실행
-실행 결과 확인:
-슬롯 ID가 올바르게 정렬되었는지?
-subitem_id가 올바르게 매칭되었는지?
-데이터 중복이 있는지?
-문제 원인 파악 후 해당 방법 적용
-📝 수정된 get_latest_wafer_data 함수
-Python
-
-Apply
-def get_latest_wafer_data(
-    df: pd.DataFrame,
-    prc_ppid: str,
-    item_ids: List[str],
-    subitem_pattern: str,
-    expected_count: int,
-    step_seq_list: List[str],
-    measurement_config: dict,
-) -> Tuple[List[List[Optional[float]]], List[str]]:
-    """
-    slot_order  지정 시 → 정렬된 슬롯 목록에서 해당 인덱스(1-based) 사용
-    skip_slots + take_slots 지정 시 → 정렬 후 앞 skip개 제외, 다음 take개 사용
-    """
-    mask = (
-        (df["prc_ppid"] == prc_ppid)
-        & (df["item_id"].isin(item_ids))
-        & (df["subitem_id"].str.fullmatch(subitem_pattern))
-        & (df["step_seq"].isin(step_seq_list))
-    )
-    filtered = df.loc[mask].copy()
-    
-    # 디버깅: 필터링된 데이터 확인
-    print(f"    🔍 {prc_ppid} {item_ids} 필터링 결과: {len(filtered)} rows")
-    if not filtered.empty:
-        print(f"       prc_tkin_time 범위: {filtered['prc_tkin_time'].min()} ~ {filtered['prc_tkin_time'].max()}")
-        print(f"       고유 subitem_id: {sorted(filtered['subitem_id'].unique())}")
-        print(f"       고유 slot_id: {sorted(filtered['prc_slot_id'].unique())}")
-    
-    if filtered.empty:
-        n = measurement_config.get("take_slots", len(measurement_config.get("slot_order", [])))
-        print(f"⚠️ {prc_ppid} {item_ids} 데이터가 없습니다.")
-        return [[] for _ in range(n)], ["" for _ in range(n)]
-    
-    latest_time = filtered["prc_tkin_time"].max()
-    latest = filtered[filtered["prc_tkin_time"] == latest_time].copy()
-    
-    # 디버깅: 최신 데이터 확인
-    print(f"    📅 최신 시간: {latest_time}")
-    print(f"       최신 데이터: {len(latest)} rows")
-    print(f"       최신 데이터의 slot_id: {sorted(latest['prc_slot_id'].unique())}")
-    
-    slot_col = "prc_slot_id" if "prc_slot_id" in latest.columns else "npw_wafer_id"
-    if slot_col not in latest.columns:
-        print("⚠️ 웨이퍼 구분 컬럼이 없습니다.")
-        n = measurement_config.get("take_slots", len(measurement_config.get("slot_order", [])))
-        return [[] for _ in range(n)], ["" for _ in range(n)]
-    
-    if isinstance(latest[slot_col].dtype, pd.CategoricalDtype):
-        latest[slot_col] = latest[slot_col].cat.remove_unused_categories()
-    latest[slot_col] = latest[slot_col].astype(str)
-    
-    slot_groups = latest.groupby(slot_col, observed=True)
-    slot_ids_all = sorted(slot_groups.groups.keys(), key=_wafer_sort_key)
-    
-    # 디버깅: 슬롯 정렬 확인
-    print(f"    🎯 정렬된 슬롯 ID: {slot_ids_all}")
-    
-    # 슬롯 선택 방식 결정
-    if "skip_slots" in measurement_config:
-        skip = measurement_config["skip_slots"]
-        take = measurement_config["take_slots"]
-        slot_ids_selected = slot_ids_all[skip: skip + take]
-    else:
-        slot_order = measurement_config["slot_order"]
-        slot_ids_selected = [
-            slot_ids_all[i - 1] for i in slot_order if i <= len(slot_ids_all)
-        ]
-        # slot_order보다 실제 슬롯이 부족하면 빈 값으로 채움
-        while len(slot_ids_selected) < len(slot_order):
-            slot_ids_selected.append(None)
-    
-    # 디버깅: 선택된 슬롯 확인
-    print(f"    ✅ 선택된 슬롯: {slot_ids_selected}")
-    
-    result_wafers = []
-    wafer_ids = []
-    
-    for slot_idx, slot_id in enumerate(slot_ids_selected):
-        if slot_id is None:
-            result_wafers.append([])
-            wafer_ids.append("")
-            continue
-        
-        wafer = slot_groups.get_group(slot_id).copy()
-        wafer_ids.append(slot_id)
-        wafer["sub_num"] = wafer["subitem_id"].str.extract(r"S0?(\d+)").astype(int)
-        wafer = wafer.sort_values("sub_num")
-        
-        # 디버깅: 웨이퍼 데이터 확인
-        print(f"       Slot {slot_idx + 1} (ID: {slot_id}): {len(wafer)} rows")
-        print(f"          sub_num 범위: {wafer['sub_num'].min()} ~ {wafer['sub_num'].max()}")
-        print(f"          subitem_id: {sorted(wafer['subitem_id'].tolist())}")
-        
-        values = []
-        for j in range(1, expected_count + 1):
-            rows = wafer[wafer["sub_num"] == j]
-            if not rows.empty:
-                # 여러 개의 데이터가 있으면 평균값 사용
-                raw_vals = rows["value"].dropna()
-                if len(raw_vals) > 1:
-                    print(f"          ⚠️  sub_num={j}에 {len(raw_vals)}개 데이터 있음 → 평균값 사용")
-                    avg_val = raw_vals.astype(float).mean()
-                    values.append(avg_val)
-                elif len(raw_vals) == 1:
-                    raw_val = raw_vals.iloc[0]
-                    if pd.isna(raw_val) or raw_val in ("", "NULL"):
-                        values.append(None)
-                    else:
-                        try:
-                            values.append(float(raw_val))
-                        except (ValueError, TypeError):
-                            values.append(None)
-                else:
-                    values.append(None)
-            else:
-                values.append(None)
-        
-        # 디버깅: 값 확인
-        non_null_count = sum(1 for v in values if v is not None)
-        print(f"          데이터: {non_null_count}/{expected_count}개 유효")
-        if non_null_count > 0:
-            print(f"          값: {[v for v in values if v is not None][:5]}...")  # 처음 5개만
-        
-        result_wafers.append(values)
-    
-    return result_wafers, wafer_ids
-이렇게 수정하면 디버깅 출력을 통해 문제의 원인을 정확히 파악할 수 있습니다! 🎉
+🔹 공정: NPW_HBMHDP8KW
+  Step SVC_PHDP_THK_20 | THK | Slot 1 (ID: 7) | 25개 데이터 → H89:H113 ✅
+PS C:\Users\bgyu1.lim\AppData\Local\Programs\Microsoft VS Code> 
+PS C:\Users\bgyu1.lim\AppData\Local\Programs\Microsoft VS Code> 
