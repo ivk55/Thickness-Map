@@ -1,198 +1,14 @@
- 조회완료: 5200 rows, 16 columns
-⏱️  조회 소요시간: 9.8초
-
-================================================================================
-  📋 조회된 데이터 요약
-================================================================================
-c:\Users\bgyu1.lim\Desktop\새 폴더\thk_backup.py:830: FutureWarning: The default of observed=False is deprecated and will be changed to True in a future version of pandas. Pass observed=False to retain current behavior or observed=True to adopt the future default and silence this warning.
-  latest_summary = summary.groupby("prc_ppid", group_keys=False).apply(lambda x: x[x["prc_tkin_time"] == x["prc_tkin_time"].max()])
-c:\Users\bgyu1.lim\Desktop\새 폴더\thk_backup.py:830: DeprecationWarning: DataFrameGroupBy.apply operated on the grouping columns. This behavior is deprecated, and in a future version of pandas the grouping columns will be excluded from the operation. Either pass `include_groups=False` to exclude the groupings or explicitly select the grouping columns after groupby to silence this warning.
-  latest_summary = summary.groupby("prc_ppid", group_keys=False).apply(lambda x: x[x["prc_tkin_time"] == x["prc_tkin_time"].max()])
-  CUSIOC1.85KL              | 2026-04-26 13:28:23 | NPCC1152_23     | slot 23 | MTKP864
-  CUSIOC1.85KL              | 2026-04-26 13:28:23 | NPCC1152_23     | slot 23 | MTKP781
-  CUSIOC1.85KL              | 2026-04-26 13:28:23 | NPCC1152_24     | slot 24 | MTKP781
-  CUSIOC1.85KL              | 2026-04-26 13:28:23 | NPCC1152_24     | slot 24 | MTKP864
-  D1SIOC1.95KL              | 2026-04-26 17:40:22 | NPCC1036_11     | slot 11 | MTKP861
-  D1SIOC1.95KL              | 2026-04-26 17:40:22 | NPCC1036_12     | slot 12 | MTKP861
-  D1SIOC1.95KL              | 2026-04-26 17:40:22 | NPCC1036_13     | slot 13 | MTKP861
-  D1SIOC1.95KL              | 2026-04-26 17:40:22 | NPCC1036_14     | slot 14 | MTKP861
-  D1SIOC3.5KL               | 2026-04-26 21:53:46 | NPCC0884_2      | slot 2 | MTKP861
-  D1SIOC3.5KL               | 2026-04-26 21:53:46 | NPCC0884_2      | slot 2 | MTKP781
-  D1SIOC3.5KL               | 2026-04-26 21:53:46 | NPCC0884_3      | slot 3 | MTKP861
-  D1SIOC3.5KL               | 2026-04-26 21:53:46 | NPCC0884_3      | slot 3 | MTKP781
-  D1SIOC3.5KL               | 2026-04-26 21:53:46 | NPCC0884_4      | slot 4 | MTKP861
-  D1SIOC3.5KL               | 2026-04-26 21:53:46 | NPCC0884_4      | slot 4 | MTKP781
-  D1SIOC3.5KL               | 2026-04-26 21:53:46 | NPCC0884_5      | slot 5 | MTKP781
-  D1SIOC3.5KL               | 2026-04-26 21:53:46 | NPCC0884_5      | slot 5 | MTKP861
-  D1SIOC4.5KL               | 2026-04-26 21:53:46 | NPCC0884_6      | slot 6 | MTKP781
-  D1SIOC4.5KL               | 2026-04-26 21:53:46 | NPCC0884_6      | slot 6 | MTKP861
-  D1SIOC4.5KL               | 2026-04-26 21:53:46 | NPCC0884_7      | slot 7 | MTKP861
-  D1SIOC4.5KL               | 2026-04-26 21:53:46 | NPCC0884_7      | slot 7 | MTKP781
-  TT_PWQ_GLUE               | 2026-04-26 15:14:29 | NPCC0829_17     | slot 17 | MTKP864
-  TT_PWQ_GLUE               | 2026-04-26 15:14:29 | NPCC0829_18     | slot 18 | MTKP864
-  TT_PWQ_GLUE               | 2026-04-26 15:14:29 | NPCC0829_19     | slot 19 | MTKP864
-  TT_PWQ_GLUE               | 2026-04-26 15:14:29 | NPCC0829_20     | slot 20 | MTKP864
-
-
-📊 선택된 설비 타입: ['GT_CU']
-
-================================================================================
-  공정별 데이터 처리
-================================================================================
-
-🔹 CUSIOC1.85KL 공정 처리 중...
-  📏 THK 측정 중...
-    ✅ 0/2 슬롯 데이터 수집 완료
-  📏 GOF 측정 중...
-    ✅ 0/2 슬롯 데이터 수집 완료
-  📏 RI 측정 중...
-    ✅ 0/2 슬롯 데이터 수집 완료
-
-🔹 CUSIOC3.5KL 공정 처리 중...
-  📏 THK 측정 중...
-⚠️ CUSIOC3.5KL ['THK1_1_TOP'] 데이터가 없습니다.
-    ✅ 0/2 슬롯 데이터 수집 완료
-  📏 GOF 측정 중...
-⚠️ CUSIOC3.5KL ['GOF1_1'] 데이터가 없습니다.
-    ✅ 0/2 슬롯 데이터 수집 완료
-  📏 RI 측정 중...
-⚠️ CUSIOC3.5KL ['RI1_2_L1'] 데이터가 없습니다.
-    ✅ 0/2 슬롯 데이터 수집 완료
-
-🔹 CUSIOC4.5KL 공정 처리 중...
-  📏 THK 측정 중...
-⚠️ CUSIOC4.5KL ['THK1_1_TOP'] 데이터가 없습니다.
-    ✅ 0/2 슬롯 데이터 수집 완료
-  📏 GOF 측정 중...
-⚠️ CUSIOC4.5KL ['GOF1_1'] 데이터가 없습니다.
-    ✅ 0/2 슬롯 데이터 수집 완료
-  📏 RI 측정 중...
-⚠️ CUSIOC4.5KL ['RI1_2_L1'] 데이터가 없습니다.
-    ✅ 0/2 슬롯 데이터 수집 완료
-
-🔹 TT_PWQ_GLUE 공정 처리 중...
-  📏 PRE_THK 측정 중...
-    ✅ 2/2 슬롯 데이터 수집 완료
-  📏 POST_THK 측정 중...
-    ✅ 2/2 슬롯 데이터 수집 완료
-
-================================================================================
-  설비별 Excel 파일 저장
-================================================================================
-📁 GT_CU 설비 → SIOC_CU_BU_COMP_ver2.xlsx
-  ✅ 저장 완료: C:\Users\bgyu1.lim\Desktop\back_up_sheet\after\SIOC_CU_BU_COMP_ver2.xlsx
-
-================================================================================
-  📊 백업 완료 - 상세 결과
-================================================================================
-
-📁 설비 타입: GT_CU
-   파일: SIOC_CU_BU_COMP_ver2.xlsx
-
-🔹 공정: CUSIOC1.85KL
-
-🔹 공정: CUSIOC3.5KL
-
-
-🔹 공정: TT_PWQ_GLUE
-  Step SVC_SIOC_GU_05 | PRE_THK | Slot 1 (ID: 17) | 25개 데이터 → U67:U91 ✅
-  Step SVC_SIOC_GU_05 | PRE_THK | Slot 2 (ID: 18) | 25개 데이터 → V67:V91 ✅
-  Step SVC_SIOC_GU_15 | POST_THK | Slot 1 (ID: 17) | 25개 데이터 → Y67:Y91 ✅
-  Step SVC_SIOC_GU_15 | POST_THK | Slot 2 (ID: 18) | 25개 데이터 → Z67:Z91 ✅
-────────────────────────────────────────────────────────────────────────────────
-🎉 THK Backup 자동화 성공!
-💾 저장된 파일: SIOC_CU_BU_COMP_ver2.xlsx
-📂 저장 위치: C:\Users\bgyu1.lim\Desktop\back_up_sheet\after
-📊 처리된 설비: ['GT_CU']
-🔧 처리된 공정: ['CUSIOC1.85KL', 'CUSIOC3.5KL', 'CUSIOC4.5KL', 'TT_PWQ_GLUE']
-
-💡 설정 힌트:
-   - 슬롯 순서 변경: PROCESS_CONFIGS에서 'slot_order' 수정
-   - 셀 위치 변경: EXCEL_CELL_MAPPING에서 셀 좌표 수정
-   - 새 설비 추가: 코드 상단의 설정 섹션 참고
-PS C:\Users\bgyu1.lim\AppData\Local\Programs\Microsoft VS Code>
-PS C:\Users\bgyu1.lim\AppData\Local\Programs\Microsoft VS Code> & conda run --live-stream --name base python "c:/Users/bgyu1.lim/Desktop/ /thk_backup.py"
-
-### Notice ###
-
-
-### Version ###
-Installed version of bigdataquery : 2.5.0
-Latest version of bigdataquery : 2.5.0   
-
-### Power User ###
-You are the DataLake Poweruser. You can use SQL statements on getData()       
-
-### Help ###
-Guide : https://go/data
-Functions:
-    __version__ : display current version of bigdataquery
-    getData() : extract data based on condition you passed (dictionary or SQL)
-    getTraceData() : extract FDC Trace data based on condition you passed (dictionary only)
-    getTableList() : search the table lists based on keyword
-    getColumnInfo() : search column information based on table name
-    login() : authenticate AD user and get token on server environment (server env only)
-    getTokenTime() : check the remaining token expiration time (server env only)
-    setDebugMode() : enable|disable mode to display detailed execution time of primary internal functions (getData only)
-    setTimeZone() : set timezone information of bigdataquery during runtime (IANA format)
-    getTimeZone() : get timezone information of bigdataquery (default: system local timezone)
-    exportDataDecorator() : extend the existing bigdataquery function to export segmented data as the desired output during runtime
-    setServerContext() : Set the server context for the client local environment to enable server-env-only functions such as login()
-
-
-THK Backup – 실시간(딜레이 0 h) 데이터를 DB에서 가져와 Excel에 저장
-설정 가능한 버전 - 새로운 설비/공정/셀 위치를 쉽게 추가할 수 있습니다
-
-================================================================================
-📋 설정 가능한 THK 백업 시스템
-📝 코드 상단의 설정 섹션에서 모든 설비/공정/셀 위치를 관리할 수 있습니다
-================================================================================
-================================================================================
-🏭 THK Backup – 실시간 데이터 백업 시스템
-================================================================================
-
-📋 사용 가능한 설비:
-   PHDP_DRAM: TAHP851, TAHP852, TAHP853, TAHP854, TAHP855, TAHP856, TAHP857
-   PHDP_FLASH: TAHP307, TAHP701, TAHP702, TAHP703, TAJP7U1, TAJP7U2, TAJP7U3
-   GT_NC: TAKP851, TAKP861
-   GT_CU: TAKP852, TAKP853, TAKP862, TAKP863, TAKP864, TAKP865, TAKP866, TAKP867
-   HITEOS: TATP871, TATP872, TATP873, TATP874
-   ALD_OX: TBLP3U4, TBLP3U5, TBLP7U1, TBLP7U2, TBLP7U3, TBLP7U4, TBLP7U5
-
-🔧 사용할 장비를 입력 (쉼표 구분, 예: TAHP857 혹은 TAHP701,TAKP851): TBLP7U4
-🔧 사용할 챔버를 입력 (쉼표 구분, 예: A): PM2
-   → 선택된 챔버: ['PM2']
-
-🔧(선택) 컨테이너 ID 입력 (예: C001,C002, 없으면 전체):
-   → 선택된 컨테이너: 전체
-
-🔧(선택) SLOT 번호 입력 (예: 1,2,3, 없으면 전체):
-   → 선택된 SLOT: 전체
-
-================================================================================
-
-🔍 DB에서 데이터 조회 중...
-Query Executed Successfully...
->> Execution Time: 0.221 sec
-==================================================
-    Rows    :  1
-    Columns :  1
-    Size    :  245.00+ Bytes
-==================================================
-
-▶ 데이터 조회 중…
-Query Executed Successfully...
->> Execution Time: 10.778 sec
-==================================================
-    Rows    :  0
-    Columns :  16
-    Size    :  124.00+ Bytes
-==================================================
-✅ 조회완료: 0 rows, 16 columns
-⏱️  조회 소요시간: 11.3초
-❌ 조회된 데이터가 없습니다.
-PS C:\Users\bgyu1.lim\AppData\Local\Programs\Microsoft VS Code>
-PS C:\Users\bgyu1.lim\AppData\Local\Programs\Microsoft VS Code>
+ 오류 발생: 'prc_ppid'
+Traceback (most recent call last):
+  File "c:\Users\bgyu1.lim\Desktop\새 폴더\thk_backup.py", line 835, in main
+    for ppid, group in latest_summary.groupby("prc_ppid", observed=True):
+  File "C:\Users\bgyu1.lim\AppData\Local\aipforge\lib\site-packages\pandas\core\frame.py", line 9183, in groupby
+    return DataFrameGroupBy(
+  File "C:\Users\bgyu1.lim\AppData\Local\aipforge\lib\site-packages\pandas\core\groupby\groupby.py", line 1329, in __init__
+    grouper, exclusions, obj = get_grouper(
+  File "C:\Users\bgyu1.lim\AppData\Local\aipforge\lib\site-packages\pandas\core\groupby\grouper.py", line 1043, in get_grouper
+    raise KeyError(gpr)
+KeyError: 'prc_ppid'
 PS C:\Users\bgyu1.lim\AppData\Local\Programs\Microsoft VS Code> & conda run --live-stream --name base python "c:/Users/bgyu1.lim/Desktop/ /thk_backup.py"
 
 ### Notice ###
@@ -241,7 +57,7 @@ THK Backup – 실시간(딜레이 0 h) 데이터를 DB에서 가져와 Excel에
    HITEOS: TATP871, TATP872, TATP873, TATP874
    ALD_OX: TBLP3U4, TBLP3U5, TBLP7U1, TBLP7U2, TBLP7U3, TBLP7U4, TBLP7U5
 
-🔧 사용할 장비를 입력 (쉼표 구분, 예: TAHP857 혹은 TAHP701,TAKP851): TBLP7U4
+🔧 사용할 장비를 입력 (쉼표 구분, 예: TAHP857 혹은 TAHP701,TAKP851): tblp7u4
    → 선택된 장비: ['TBLP7U4']
 
 🏠 사용 가능한 챔버: A, B, C, D, PM1, PM2, 1, 2
@@ -258,7 +74,7 @@ THK Backup – 실시간(딜레이 0 h) 데이터를 DB에서 가져와 Excel에
 
 🔍 DB에서 데이터 조회 중...
 Query Executed Successfully...
->> Execution Time: 0.231 sec
+>> Execution Time: 0.228 sec
 ==================================================
     Rows    :  1
     Columns :  1
@@ -267,245 +83,27 @@ Query Executed Successfully...
 
 ▶ 데이터 조회 중…
 Query Executed Successfully...
->> Execution Time: 40.419 sec
+>> Execution Time: 24.910 sec
 ==================================================
     Rows    :  2970
     Columns :  16
     Size    :  83.64+ KB
 ==================================================
 ✅ 조회완료: 2970 rows, 16 columns
-⏱️  조회 소요시간: 41.0초
+⏱️  조회 소요시간: 25.5초
 
 ================================================================================
   📋 조회된 데이터 요약
 ================================================================================
-c:\Users\bgyu1.lim\Desktop\새 폴더\thk_backup.py:830: FutureWarning: The default of observed=False is deprecated and will be changed to True in a future version of pandas. Pass observed=False to retain current behavior or observed=True to adopt the future default and silence this warning.
-  latest_summary = summary.groupby("prc_ppid", group_keys=False).apply(lambda x: x[x["prc_tkin_time"] == x["prc_tkin_time"].max()])
-c:\Users\bgyu1.lim\Desktop\새 폴더\thk_backup.py:830: DeprecationWarning: DataFrameGroupBy.apply operated on the grouping columns. This behavior is deprecated, and in a future version of pandas the grouping columns will be excluded from the operation. Either pass `include_groups=False` to exclude the groupings or explicitly select the grouping columns after groupby to silence this warning.
-  latest_summary = summary.groupby("prc_ppid", group_keys=False).apply(lambda x: x[x["prc_tkin_time"] == x["prc_tkin_time"].max()])
-  TT_500CY                  | 2026-04-23 15:53:09 | NPBM0119_6      | slot 6 | MTKP761
-  TT_500CY                  | 2026-04-23 15:53:09 | NPBM0119_7      | slot 7 | MTKP761
-  TT_500CY                  | 2026-04-23 15:53:09 | NPBM0119_8      | slot 8 | MTKP761
-  TT_500CY                  | 2026-04-23 15:53:09 | NPBM0119_9      | slot 9 | MTKP761
-  VALOX142                  | 2026-04-23 15:27:32 | NPM08654_13     | slot 13 | MTKP751
-  VALOX142                  | 2026-04-23 15:27:32 | NPM08654_21     | slot 21 | MTKP751
-
-
-📊 선택된 설비 타입: ['ALD_OX']
-
-================================================================================
-  공정별 데이터 처리
-================================================================================
-
-🔹 VALOX142 공정 처리 중...
-  📏 GOF 측정 중...
-    ✅ 4/4 슬롯 데이터 수집 완료
-  📏 PRE_THK 측정 중...
-    ✅ 4/4 슬롯 데이터 수집 완료
-  📏 POST_THK 측정 중...
-    ✅ 4/4 슬롯 데이터 수집 완료
-
-================================================================================
-  설비별 Excel 파일 저장
-================================================================================
-  📊 백업 완료 - 상세 결과
-================================================================================
-
-📁 설비 타입: ALD_OX
-   파일: ALD_OX_BU_COMP.xlsx
-
-🔹 공정: VALOX142
-  Step PVM_ALD_THK_14 | GOF | Slot 1 (ID: 9) | 25개 데이터 → G52:G76 ✅
-  Step PVM_ALD_THK_14 | GOF | Slot 2 (ID: 10) | 25개 데이터 → H52:H76 ✅
-  Step PVM_ALD_THK_14 | GOF | Slot 3 (ID: 11) | 25개 데이터 → I52:I76 ✅
-  Step PVM_ALD_THK_14 | GOF | Slot 4 (ID: 12) | 25개 데이터 → J52:J76 ✅
-  Step PVM_ALD_THK_14 | PRE_THK | Slot 1 (ID: 9) | 25개 데이터 → K52:K76 ✅
-  Step PVM_ALD_THK_14 | PRE_THK | Slot 2 (ID: 10) | 25개 데이터 → L52:L76 ✅
-  Step PVM_ALD_THK_14 | PRE_THK | Slot 3 (ID: 11) | 25개 데이터 → M52:M76 ✅
-  Step PVM_ALD_THK_14 | PRE_THK | Slot 4 (ID: 12) | 25개 데이터 → N52:N76 ✅
-  Step PVM_ALD_THK_24 | POST_THK | Slot 1 (ID: 9) | 25개 데이터 → O52:O76 ✅
-  Step PVM_ALD_THK_24 | POST_THK | Slot 2 (ID: 10) | 25개 데이터 → P52:P76 ✅
-  Step PVM_ALD_THK_24 | POST_THK | Slot 3 (ID: 11) | 25개 데이터 → Q52:Q76 ✅
-  Step PVM_ALD_THK_24 | POST_THK | Slot 4 (ID: 12) | 25개 데이터 → R52:R76 ✅
-────────────────────────────────────────────────────────────────────────────────
-🎉 THK Backup 자동화 성공!
-💾 저장된 파일: ALD_OX_BU_COMP.xlsx
-📂 저장 위치: C:\Users\bgyu1.lim\Desktop\back_up_sheet\after
-📊 처리된 설비: ['ALD_OX']
-🔧 처리된 공정: ['VALOX142']
-
-💡 설정 힌트:
-   - 슬롯 순서 변경: PROCESS_CONFIGS에서 'slot_order' 수정
-   - 셀 위치 변경: EXCEL_CELL_MAPPING에서 셀 좌표 수정
-   - 새 설비 추가: 코드 상단의 설정 섹션 참고
-PS C:\Users\bgyu1.lim\AppData\Local\Programs\Microsoft VS Code>
-PS C:\Users\bgyu1.lim\AppData\Local\Programs\Microsoft VS Code>
-PS C:\Users\bgyu1.lim\AppData\Local\Programs\Microsoft VS Code>
-PS C:\Users\bgyu1.lim\AppData\Local\Programs\Microsoft VS Code> & conda run --live-stream --name base python "c:/Users/bgyu1.lim/Desktop/ /thk_backup.py"
-
-### Notice ###
-
-
-### Version ###
-Installed version of bigdataquery : 2.5.0
-Latest version of bigdataquery : 2.5.0
-
-### Power User ###
-You are the DataLake Poweruser. You can use SQL statements on getData()
-
-### Help ###
-Guide : https://go/data
-Functions:
-    __version__ : display current version of bigdataquery
-    getData() : extract data based on condition you passed (dictionary or SQL)
-    getTraceData() : extract FDC Trace data based on condition you passed (dictionary only)
-    getTableList() : search the table lists based on keyword
-    getColumnInfo() : search column information based on table name
-    login() : authenticate AD user and get token on server environment (server env only)
-    getTokenTime() : check the remaining token expiration time (server env only)
-    setDebugMode() : enable|disable mode to display detailed execution time of primary internal functions (getData only)
-    setTimeZone() : set timezone information of bigdataquery during runtime (IANA format)
-    getTimeZone() : get timezone information of bigdataquery (default: system local timezone)
-    exportDataDecorator() : extend the existing bigdataquery function to export segmented data as the desired output during runtime
-    setServerContext() : Set the server context for the client local environment to enable server-env-only functions such as login()
-
-
-THK Backup – 실시간(딜레이 0 h) 데이터를 DB에서 가져와 Excel에 저장
-설정 가능한 버전 - 새로운 설비/공정/셀 위치를 쉽게 추가할 수 있습니다
-
-================================================================================
-📋 설정 가능한 THK 백업 시스템
-📝 코드 상단의 설정 섹션에서 모든 설비/공정/셀 위치를 관리할 수 있습니다
-================================================================================
-================================================================================
-🏭 THK Backup – 실시간 데이터 백업 시스템
-================================================================================
-
-📋 사용 가능한 설비:
-   PHDP_DRAM: TAHP851, TAHP852, TAHP853, TAHP854, TAHP855, TAHP856, TAHP857
-   PHDP_FLASH: TAHP307, TAHP701, TAHP702, TAHP703, TAJP7U1, TAJP7U2, TAJP7U3
-   GT_NC: TAKP851, TAKP861
-   GT_CU: TAKP852, TAKP853, TAKP862, TAKP863, TAKP864, TAKP865, TAKP866, TAKP867
-   HITEOS: TATP871, TATP872, TATP873, TATP874
-   ALD_OX: TBLP3U4, TBLP3U5, TBLP7U1, TBLP7U2, TBLP7U3, TBLP7U4, TBLP7U5
-
-🔧 사용할 장비를 입력 (쉼표 구분, 예: TAHP857 혹은 TAHP701,TAKP851): tatp873
-   → 선택된 장비: ['TATP873']
-
-🏠 사용 가능한 챔버: A, B, C, D, PM1, PM2, 1, 2
-🔧 사용할 챔버를 입력 (쉼표 구분, 예: A): c
-   → 선택된 챔버: ['C']
-
-🔧(선택) 컨테이너 ID 입력 (예: C001,C002, 없으면 전체):
-   → 선택된 컨테이너: 전체
-
-🔧(선택) SLOT 번호 입력 (예: 1,2,3, 없으면 전체):
-   → 선택된 SLOT: 전체
-
-================================================================================
-
-🔍 DB에서 데이터 조회 중...
-Query Executed Successfully...
->> Execution Time: 0.289 sec
-==================================================
-    Rows    :  1
-    Columns :  1
-    Size    :  245.00+ Bytes
-==================================================
-
-▶ 데이터 조회 중…
-Query Executed Successfully...
->> Execution Time: 47.20 sec
-==================================================
-    Rows    :  5358
-    Columns :  16
-    Size    :  183.28+ KB
-==================================================
-✅ 조회완료: 5358 rows, 16 columns
-⏱️  조회 소요시간: 47.7초
-
-================================================================================
-  📋 조회된 데이터 요약
-================================================================================
-c:\Users\bgyu1.lim\Desktop\새 폴더\thk_backup.py:830: FutureWarning: The default of observed=False is deprecated and will be changed to True in a future version of pandas. Pass observed=False to retain current behavior or observed=True to adopt the future default and silence this warning.
-  latest_summary = summary.groupby("prc_ppid", group_keys=False).apply(lambda x: x[x["prc_tkin_time"] == x["prc_tkin_time"].max()])
-c:\Users\bgyu1.lim\Desktop\새 폴더\thk_backup.py:830: DeprecationWarning: DataFrameGroupBy.apply operated on the grouping columns. This behavior is deprecated, and in a future version of pandas the grouping columns will be excluded from the operation. Either pass `include_groups=False` to exclude the groupings or explicitly select the grouping columns after groupby to silence this warning.
-  latest_summary = summary.groupby("prc_ppid", group_keys=False).apply(lambda x: x[x["prc_tkin_time"] == x["prc_tkin_time"].max()])
-  CUTEOS24KR                | 2026-04-27 12:42:28 | NPCC0295_13     | slot 13 | MTKP781
-  CUTEOS24KR                | 2026-04-27 12:42:28 | NPCC0295_13     | slot 13 | MTKP864
-  CUTEOS24KR                | 2026-04-27 12:42:28 | NPCC0295_14     | slot 14 | MTKP781
-  CUTEOS24KR                | 2026-04-27 12:42:28 | NPCC0295_14     | slot 14 | MTKP864
-  CUTEOS24KR                | 2026-04-27 12:42:28 | NPCC0295_15     | slot 15 | MTKP781
-  CUTEOS24KR                | 2026-04-27 12:42:28 | NPCC0295_15     | slot 15 | MTKP864
-  CUTEOS24KR                | 2026-04-27 12:42:28 | NPCC0295_16     | slot 16 | MTKP781
-  CUTEOS24KR                | 2026-04-27 12:42:28 | NPCC0295_16     | slot 16 | MTKP864
-  CUTEOS38KLC               | 2026-04-27 12:42:28 | NPCC0295_17     | slot 17 | MTKP864
-  CUTEOS38KLC               | 2026-04-27 12:42:28 | NPCC0295_17     | slot 17 | MTKP781
-  CUTEOS38KLC               | 2026-04-27 12:42:28 | NPCC0295_18     | slot 18 | MTKP781
-  CUTEOS38KLC               | 2026-04-27 12:42:28 | NPCC0295_18     | slot 18 | MTKP864
-  CUTEOS56KD                | 2026-04-27 12:42:28 | NPCC0295_19     | slot 19 | MTKP781
-  CUTEOS56KD                | 2026-04-27 12:42:28 | NPCC0295_19     | slot 19 | MTKP864
-  CUTEOS56KD                | 2026-04-27 12:42:28 | NPCC0295_20     | slot 20 | MTKP864
-  CUTEOS56KD                | 2026-04-27 12:42:28 | NPCC0295_20     | slot 20 | MTKP781
-  TT_CLNRATE                | 2026-04-18 01:12:56 | NPCC1020_19     | slot 19 | MTKP864
-  TT_CLNRATE                | 2026-04-18 01:12:56 | NPCC1020_20     | slot 20 | MTKP864
-
-
-📊 선택된 설비 타입: ['HITEOS']
-
-================================================================================
-  공정별 데이터 처리
-================================================================================
-
-🔹 CUTEOS56KD 공정 처리 중...
-  📏 THK 측정 중...
-    ✅ 0/2 슬롯 데이터 수집 완료
-  📏 GOF 측정 중...
-    ✅ 0/2 슬롯 데이터 수집 완료
-
-🔹 CUTEOS24KR 공정 처리 중...
-  📏 THK 측정 중...
-    ✅ 2/2 슬롯 데이터 수집 완료
-  📏 GOF 측정 중...
-    ✅ 2/2 슬롯 데이터 수집 완료
-
-🔹 CUTEOS38KLC 공정 처리 중...
-  📏 THK 측정 중...
-    ✅ 0/2 슬롯 데이터 수집 완료
-  📏 GOF 측정 중...
-    ✅ 0/2 슬롯 데이터 수집 완료
-
-================================================================================
-  설비별 Excel 파일 저장
-================================================================================
-📁 HITEOS 설비 → HITEOS_BU_COMP.xlsx
-  ✅ 저장 완료: C:\Users\bgyu1.lim\Desktop\back_up_sheet\after\HITEOS_BU_COMP.xlsx
-
-================================================================================
-  📊 백업 완료 - 상세 결과
-================================================================================
-
-📁 설비 타입: HITEOS
-   파일: HITEOS_BU_COMP.xlsx
-
-🔹 공정: CUTEOS56KD
-
-🔹 공정: CUTEOS24KR
-  Step SVC_TEOS_THKR_22 | THK | Slot 1 (ID: 15) | 25개 데이터 → G87:G111 ✅
-  Step SVC_TEOS_THKR_22 | THK | Slot 2 (ID: 16) | 25개 데이터 → H87:H111 ✅
-  Step SVC_TEOS_THKR_22 | GOF | Slot 1 (ID: 15) | 25개 데이터 → I87:I111 ✅
-  Step SVC_TEOS_THKR_22 | GOF | Slot 2 (ID: 16) | 25개 데이터 → J87:J111 ✅
-
-🔹 공정: CUTEOS38KLC
-────────────────────────────────────────────────────────────────────────────────
-🎉 THK Backup 자동화 성공!
-💾 저장된 파일: HITEOS_BU_COMP.xlsx
-📂 저장 위치: C:\Users\bgyu1.lim\Desktop\back_up_sheet\after
-📊 처리된 설비: ['HITEOS']
-🔧 처리된 공정: ['CUTEOS56KD', 'CUTEOS24KR', 'CUTEOS38KLC']
-
-💡 설정 힌트:
-   - 슬롯 순서 변경: PROCESS_CONFIGS에서 'slot_order' 수정
-   - 셀 위치 변경: EXCEL_CELL_MAPPING에서 셀 좌표 수정
-   - 새 설비 추가: 코드 상단의 설정 섹션 참고
+❌ 오류 발생: 'prc_ppid'
+Traceback (most recent call last):
+  File "c:\Users\bgyu1.lim\Desktop\새 폴더\thk_backup.py", line 835, in main
+    for ppid, group in latest_summary.groupby("prc_ppid", observed=True):
+  File "C:\Users\bgyu1.lim\AppData\Local\aipforge\lib\site-packages\pandas\core\frame.py", line 9183, in groupby
+    return DataFrameGroupBy(
+  File "C:\Users\bgyu1.lim\AppData\Local\aipforge\lib\site-packages\pandas\core\groupby\groupby.py", line 1329, in __init__
+    grouper, exclusions, obj = get_grouper(
+  File "C:\Users\bgyu1.lim\AppData\Local\aipforge\lib\site-packages\pandas\core\groupby\grouper.py", line 1043, in get_grouper
+    raise KeyError(gpr)
+KeyError: 'prc_ppid'
 PS C:\Users\bgyu1.lim\AppData\Local\Programs\Microsoft VS Code> 
