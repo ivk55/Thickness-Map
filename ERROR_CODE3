@@ -1,6 +1,7 @@
 이제 3개를 더 만들거야. 꼼꼼하게 읽어봐.
+SHEET 위치는 전부 동일함 Before 폴더에 있음.
 
-1. SIOC_CU_BU_SHEET_ver2.xlsx (위치는 동일)
+1. SIOC_CU_BU_SHEET_ver2.xlsx 
 
 일단 나눠야함. CUSIOC 설비는 TAKP852,TAKP853,TAKP862,TAKP863,TAKP864,TAKP865,TAKP866,TAKP867 설비가 있음 
 그 중에 TAKP852,853,863,864설비는 PPID CUSIOC1.85KL, CUSIOC3.5KL, CUSIOC4.5KL를 다 봐야함 따라서 NPW 8장 진행 (첫 두장 버림)
@@ -27,7 +28,7 @@ CUSIOC3.5KL
 
 CUSIOC4.5KL
 
-3번째 THK는 OC67~O91까지 이거의 GOF값 Q67~Q91. 이거의 RI 값 S67~S91. 전부 STEP_seq은 SVC_SIOC_THK_20
+3번째 THK는 O67~O91까지 이거의 GOF값 Q67~Q91. 이거의 RI 값 S67~S91. 전부 STEP_seq은 SVC_SIOC_THK_20
 4번째 THK는 P67~P91 이거의 GOF값 R67~R91. 이거의 RI 값 T67~T91. 전부 STEP_seq은 SVC_SIOC_THK_20
 
 
@@ -40,4 +41,63 @@ POST THK
 1번쨰 THK는 Y67~Y91까지. STEP_SEQP는 SVC_SIOC_GU_15
 2번째 THK는 Z67~Z91까지. STEP_SEQP는 SVC_SIOC_GU_15
 
+
+
+2. HITEOS : HITEOS_BU_SHEET.xlsx
+애는 총 8개의 NPW를 걸어서 PPID 3개를 확인함. 1,2 SLOT은 버림
+설비는 TATP871,TATP872,TATP873,TATP874가 있으며 Chamber는 A,B,C 
+PPID는 3개임. CUTEOS56KD, CUTEOS24KR, CUTEOS38KLC
+
+이제 엑셀을 알려줄게
+THK, GOF값을 봐야함.  
+THK는 THK1_1_TOP
+GOF는 GOF1_1
+GT랑 똑같음.
+
+CUTEOS56KD
+
+3번째 THK는 C87~C111까지 이거의 GOF값 E87~E111.전부 STEP_seq은 SVC_TEOS_THKR_22
+4번째 THK는 D87~D111 이거의 GOF값 F87~F111. 전부 STEP_seq은 SVC_TEOS_THKR_22
+
+CUTEOS24KR
+
+3번째 THK는 G87~G111까지 이거의 GOF값 I87~I111. 전부 STEP_seq은 SVC_TEOS_THKR_22
+4번째 THK는 H87~H111 이거의 GOF값 J87~J111. 전부 STEP_seq은 SVC_TEOS_THKR_22
+CUTEOS38KLC
+
+3번째 THK는 K87~K111까지 이거의 GOF값 M87~M111.전부 STEP_seq은 SVC_TEOS_THKR_22
+4번째 THK는 L87~L111 이거의 GOF값 N87~N111.전부 STEP_seq은 SVC_TEOS_THKR_22
+
+
+3.ALD_OX_BU_SHEET.xlsx
+얘는 구조가 살짝 다른데. PM1-RC1, RC2, RC3, RC4 이런식으로 되어있어
+PM즉 Chamber는 2개가 있고 RC1,2,3,4가 있는구조.
+여튼 Chamber는 PM1,PM2 이렇게 적으면될듯
+애는 총 4개의 NPW를 걸어서 PPID 전 후 데이터 값을 넣어야댐. 즉 TT_PWQ_GLUE랑 비슷함
+일단 PPID는 VALOX142임. 이것만 확인하면됨
+
+일단 PRE THK는 DATA순서대로 넣으면됨. 즉 SLOT 1,2,3,4
+THK는 THK1_1_TOP
+GOF는 GOF1_1
+
+일단 GOF부터
+GOF는 
+첫장 G52~G76까지 PVM_ALD_THK_14
+두번째장 H52~H76까지 스텝동일.
+세번째장 I52~I76
+네번째 J52~76
+
+THK는 GOF랑 동일하게 52~76이야 열은 생략할게. 
+
+PRE THK는 Step이 PVM_ALD_THK_14야
+첫장 K
+둘짱 L
+셋짱 M
+넷짱 N
+
+POST THK는 Step이 PVM_ALD_THK_14야.
+첫장 O
+둘짱 P
+셋짱 Q
+넷짱 R
 
