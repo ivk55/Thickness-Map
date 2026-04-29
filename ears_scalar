@@ -1,94 +1,118 @@
-import com.sec.eeg.ars.data.AgentConfig
-import com.sec.eeg.ars.utils.ScriptUtils
-import org.apache.http.client.methods.{CloseableHttpResponse, HttpPost}
-import org.apache.http.entity.StringEntity
-import org.apache.http.impl.client.HttpClientBuilder
-import org.apache.http.protocol.HTTP
-import org.json4s.DefaultFormats
-import org.json4s.jackson.Serialization.write
+import com.sun.jna.platform.win32.{User32}
+import com.sun.jna.platform.win32.WinDef._
+import com.sun.jna.platform.win32.WinUser
+import com.sun.jna.{Native, Pointer}
+import com.sun.jna.platform.win32.WinDef.DWORD
 import org.slf4j.LoggerFactory
-import org.joda.time.{DateTime, LocalDateTime}
-import org.joda.time.format.DateTimeFormat
 
+val logger = LoggerFactory.getLogger("EARS")
 
-case class MessageBodyWrapper(key: String, value: MessageBody)
-case class MessageBody(process: String, messengerGroup: String, templateTitle: String, model: String, line: String, eqpid: String, scname: String, message: Message, time: String)
-case class Message(appcard:String="", dataframe:String="", textmessage:String="", snapshot:String="")
+def bringToFront(user32: User32, hWnd: HWND): Unit = {
 
-val logger =  LoggerFactory.getLogger("MessageSender.scala")
+  user32.ShowWindow(hWnd, 9) // SW_RESTORE
 
-val kafkaTopic = "msg_inform"
-
-def RequestMessageToKafkaRest(msg: List[MessageBodyWrapper]): (Boolean,Int) = {
-  implicit val formats: DefaultFormats.type = DefaultFormats
-  case class KafkaRestBodyWrapper(records: List[MessageBodyWrapper])
-
-  val httpClient = HttpClientBuilder.create().setDefaultRequestConfig(AgentConfig.requestConfig).build()
-  try {
-    val apiBody = write(KafkaRestBodyWrapper(msg))
-    logger.info(s"kafka rest url : ${AgentConfig.GetKafkaRestServerAddress}")
-    logger.info(s"kafka message : $apiBody")
-    val post = new HttpPost(s"http://${AgentConfig.GetKafkaRestServerAddress}/topics/$kafkaTopic")
-    post.setHeader(HTTP.CONTENT_TYPE, "application/vnd.kafka.json.v2+json")
-    post.setEntity(new StringEntity(apiBody, "UTF-8"))
-
-    val response: CloseableHttpResponse = httpClient.execute(post)
-
-    if (response.getStatusLine.getStatusCode != 200) {
-      logger.info(s"kafka rest response: ${response.getStatusLine}")
-      (false, response.getStatusLine.getStatusCode)
-    } else {
-      logger.info(s"Sending kafka message success")
-      (true, response.getStatusLine.getStatusCode)
-    }
-  } catch {
-    case ex: Throwable =>
-      logger.warn(s"Sending kafka message exception", ex)
-      (false, 500)
-  } finally {
-    if (httpClient != null) {
-      try {
-        httpClient.close()
-      } catch {
-        case _: Exception =>
-      }
-    }
-  }
+  user32.SetForegroundWindow(hWnd)
+  Thread.sleep(100)
+  user32.SetForegroundWindow(hWnd)
 }
 
-//args = MessageSender_Template.scala;{MessengerGroup};{templateTitle};{text message}
-def wrapper(args: List[String]) : (Boolean,String,Map[String,String]) = {
+def forcePopup(user32: User32, hwnd: HWND): Unit = {
+
+  val HWND_TOPMOST   = new HWND(Pointer.createConstant(-1))
+  val HWND_NOTOPMOST = new HWND(Pointer.createConstant(-2))
+
+  val SWP_FLAGS = 0x0001 | 0x0002 | 0x0040
+
+  user32.ShowWindow(hwnd, WinUser.SW_RESTORE)
+  Thread.sleep(50)
+
+  user32.ShowWindow(hwnd, WinUser.SW_MAXIMIZE)
+  Thread.sleep(50)
+
+  user32.SetWindowPos(
+    hwnd,
+    HWND_TOPMOST,
+    0, 0, 0, 0,
+    SWP_FLAGS
+  )
+  user32.SetForegroundWindow(hwnd)
+  Thread.sleep(50)
+
+  Thread.sleep(100)
+
+  user32.SetWindowPos(
+    hwnd,
+    HWND_NOTOPMOST,
+    0, 0, 0, 0,
+    SWP_FLAGS
+  )
+  user32.SetForegroundWindow(hwnd)
+}
+
+def wrapper(args: List[String]): (Boolean, String, Map[String, String]) = {
   try {
-    logger.info(s"args : $args")
-    if (args.length == 2) {
-      val key_values = ScriptUtils.GetImmutableParams(args)
-      val scname = key_values.getOrElse("ALID", "")      
-      val msgTemplateTitle = args(1)
-      val msgGroup = args(1).replace("TEMPLATE","RECEIVER")
-      val msgText = ""
-      val currentDateTime = new DateTime()
-      val formatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss")
-      val formattedDateTime = formatter.print(currentDateTime)
 
-      logger.info(s"message info : $msgGroup, $msgText")
+    val user32 = User32.INSTANCE
 
-      val message = Message(textmessage = msgText)
-      val messageBody = MessageBody(AgentConfig.Process, msgGroup, msgTemplateTitle, AgentConfig.Model, AgentConfig.Line, AgentConfig.EquipmentID, scname, message, formattedDateTime)
-      val messageBuffer = List(MessageBodyWrapper(AgentConfig.EquipmentID, messageBody))
+    var targetHwnd: HWND = null
+    var foundTitle: String = ""
 
-      val res = RequestMessageToKafkaRest(messageBuffer)
-      if (res._1) {
-        (true, s"Response code from MessengerServer - success", Map.empty[String, String])
-      } else {
-        (false, s"Response code from MessengerServer - failed", Map.empty[String, String])
-      }   
-    } else {
-      (false, s"args is not correct", Map.empty[String, String])  
-    }    
-  } catch {
-    case ex: Throwable =>
-      logger.warn(s"MessageSender exception", ex)
+    val keyword = if (args.nonEmpty) args.head else "localhost"
+
+    val enumProc = new WinUser.WNDENUMPROC {
+      override def callback(hWnd: HWND, data: Pointer): Boolean = {
+
+        val titleArr: Array[Char] = Array.fill(512)('\u0000')
+        val classArr: Array[Char] = Array.fill(512)('\u0000')
+
+        user32.GetWindowText(hWnd, titleArr, 512)
+        user32.GetClassName(hWnd, classArr, 512)
+
+        val title = Native.toString(titleArr)
+        val cls   = Native.toString(classArr)
+
+        //logger.info(s"[HWND] $hWnd | [CLASS] $cls | [TITLE] $title")
+
+	    if (title != null &&
+	        title.contains("localhost") &&
+	        title.trim.nonEmpty) {
+	
+	      targetHwnd = hWnd
+	        }
+	        true
+      }
+    }
+
+    user32.EnumWindows(enumProc, null)
+
+    if (targetHwnd == null) {
+      return (
+        false,
+        "failed: TITLE is not found",
+        Map("keyword" -> keyword)
+      )
+    }
+
+    logger.info("select HWND: " + targetHwnd)
+    logger.info("select TITLE: " + foundTitle)
+
+	forcePopup(user32, targetHwnd)
+	
+    (
+      true,
+      "Success: top_max_fix",
+      Map(
+        "title" -> foundTitle,
+        "keyword" -> keyword
+      )
+    )
+
+    (true, s"Success", Map.empty[String, String])
+  }
+  catch {
+    case ex: Exception =>
+      logger.error("Exception:", ex)
       (false, ex.getMessage, Map.empty[String, String])
-  }  
+  }
 }
 wrapper _ 
