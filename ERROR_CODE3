@@ -1,70 +1,50 @@
-CUTEOS24KR                | 2026-04-20 22:02:48 | NPCC0442_1      | slot 1 | MTKP861
-  CUTEOS24KR                | 2026-04-20 22:02:48 | NPCC0442_1      | slot 1 | MTKP381
-  CUTEOS24KR                | 2026-04-20 22:02:48 | NPCC0442_2      | slot 2 | MTKP381
-  CUTEOS24KR                | 2026-04-20 22:02:48 | NPCC0442_2      | slot 2 | MTKP861
-  CUTEOS24KR                | 2026-04-20 22:02:48 | NPCC0442_3      | slot 3 | MTKP381
-  CUTEOS24KR                | 2026-04-20 22:02:48 | NPCC0442_3      | slot 3 | MTKP861
-  CUTEOS24KR                | 2026-04-20 22:02:48 | NPCC0442_4      | slot 4 | MTKP381
-  CUTEOS24KR                | 2026-04-20 22:02:48 | NPCC0442_4      | slot 4 | MTKP861
-  CUTEOS38KLC               | 2026-04-20 18:57:37 | NPCC0347_5      | slot 5 | MTKP381
-  CUTEOS38KLC               | 2026-04-20 18:57:37 | NPCC0347_5      | slot 5 | MTKP861
-  CUTEOS38KLC               | 2026-04-20 18:57:37 | NPCC0347_6      | slot 6 | MTKP861
-  CUTEOS38KLC               | 2026-04-20 18:57:37 | NPCC0347_6      | slot 6 | MTKP381
-  CUTEOS56KD                | 2026-04-21 07:45:47 | NPCC0464_13     | slot 13 | MTKP864
-  CUTEOS56KD                | 2026-04-21 07:45:47 | NPCC0464_24     | slot 24 | MTKP864
-  TT_CLNRATE                | 2026-04-25 16:09:09 | NPCC0913_15     | slot 15 | MTKP861
-  TT_CLNRATE                | 2026-04-25 16:09:09 | NPCC0913_16     | slot 16 | MTKP861
-  TT_CLNRATE                | 2026-04-25 16:09:09 | NPCC0913_19     | slot 19 | MTKP861
-  TT_CLNRATE                | 2026-04-25 16:09:09 | NPCC0913_20     | slot 20 | MTKP861
+026-04-29 09:04:36.531 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-04-29 09:04:36.532 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-04-29 09:04:38.243 
+  Warning: to view this Streamlit app on a browser, run it with the following
+  command:
 
-이런식으로 나오는데, 선택해서 넣을 수 있게.
-
-만약 PHDP Back up 중이면 
-NPW_DACUHDP8KLP랑 NPW_HBMHDP8KW 챙겨야대는데 그 RECIPE THK DATA 삽입하기 전에, SLOT 정보들 보여주고 삽입하게하기. 그럼 TEOS, GT CU 다 개선 가능할듯.
-
-그니까 선택 목록 만들기
-
-
-이게 첫번째고,
-
-두번째는 DSR
-
-먼저 PHDP DRAM TAHP851~TAHP857부터. 총 2매진행. SLOT은 1,2 순서대로 볼거임
-
-DEP1_DR의 PPID는 TT_NPA_D1_DR_8KLP의 DATA는
-L89~L113에 삽입. STEP SEQ :SVC_PHDP_DSR_20
-SLOT은 1
-
-DEP2_DR의 PPID는 TT_NPA_D2_DR_8KLP의 DATA는
-P89~P113에 삽입. STEP SEQ : SVC_PHDP_DSR_20
-SLOT은 2
-
-DEP1_SR의 PPID는 TT_NPA_D1_SR_8KLP의 DATA는
-M89~M113에 삽입. STEP SEQ:SVC_PHDP_DSR_40
-SLOT은 1
-
-DEP2_SR의 PPID는 TT_NPA_D2_SR_8KLP의 DATA는
-Q89~Q113에 삽입. STEP SEQ: SVC_PHDP_DSR_40
-SLOT은 2
-
-DRAM FLASH DSR은 TAHP307, TAHP701~TAPH703, TAJP7U1~TAJP7U3 동일하게 총2매 진행. 순서대로 볼거임
-
-DEP1_DR의 PPID는 FN8KF_D1_DR의 DATA는
-F79~F103에 삽입. STEP SEQ :PVC_PHDP_THK_22
-SLOT은 1
-
-DEP2_DR의 PPID는 FN8KF_D2_DR의 DATA는
-J79~J103에 삽입. STEP SEQ : PVC_PHDP_THK_32
-SLOT은 2
-
-DEP1_SR의 PPID는 FN8KF_D1_SR의 DATA는
-G79~G103에 삽입. STEP SEQ:SVC_PHDP_DSR_40
-SLOT은 1
-
-DEP2_SR의 PPID는 FN8KF_D2_SR의 DATA는
-K79~K103에 삽입. STEP SEQ: PVC_PHDP_THK_32
-SLOT은 2
-
-
-세번째는 사내 웹 배포
-
+    streamlit run c:/Users/bgyu1.lim/Desktop/새 폴더/thk_backup_streamlit.py [ARGUMENTS]
+2026-04-29 09:04:38.244 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-04-29 09:04:38.244 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-04-29 09:04:38.245 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-04-29 09:04:38.245 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-04-29 09:04:38.245 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-04-29 09:04:38.245 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-04-29 09:04:38.246 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-04-29 09:04:38.246 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-04-29 09:04:38.246 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-04-29 09:04:38.246 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-04-29 09:04:38.247 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-04-29 09:04:38.247 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-04-29 09:04:38.247 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-04-29 09:04:38.247 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-04-29 09:04:38.248 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-04-29 09:04:38.248 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-04-29 09:04:38.248 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-04-29 09:04:38.248 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-04-29 09:04:38.248 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-04-29 09:04:38.249 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-04-29 09:04:38.249 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-04-29 09:04:38.249 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-04-29 09:04:38.249 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-04-29 09:04:38.250 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-04-29 09:04:38.250 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-04-29 09:04:38.250 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-04-29 09:04:38.250 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-04-29 09:04:38.250 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-04-29 09:04:38.250 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-04-29 09:04:38.251 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-04-29 09:04:38.251 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-04-29 09:04:38.251 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-04-29 09:04:38.251 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-04-29 09:04:38.251 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-04-29 09:04:38.251 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-04-29 09:04:38.252 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-04-29 09:04:38.252 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-04-29 09:04:38.252 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-04-29 09:04:38.252 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-04-29 09:04:38.252 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-04-29 09:04:38.253 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-04-29 09:04:38.253 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-04-29 09:04:38.253 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
