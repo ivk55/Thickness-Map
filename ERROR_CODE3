@@ -1,5 +1,4 @@
-PS C:\Users\bgyu1.lim\AppData\Local\Programs\Microsoft VS Code> streamlit run thk_backup_streamlit.py
-Usage: streamlit run [OPTIONS] [TARGET] [ARGS]...
-Try 'streamlit run --help' for help.
-
-Error: Invalid value: File does not exist: thk_backup_streamlit.py
+File "C:\Users\bgyu1.lim\Desktop\새 폴더\thk_backup_streamlit.py", line 7
+  """
+     ^
+SyntaxError: (unicode error) 'unicodeescape' codec can't decode bytes in position 63-64: truncated \UXXXXXXXX escape
