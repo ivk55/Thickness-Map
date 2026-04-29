@@ -1,1 +1,94 @@
+import com.sec.eeg.ars.data.AgentConfig
+import com.sec.eeg.ars.utils.ScriptUtils
+import org.apache.http.client.methods.{CloseableHttpResponse, HttpPost}
+import org.apache.http.entity.StringEntity
+import org.apache.http.impl.client.HttpClientBuilder
+import org.apache.http.protocol.HTTP
+import org.json4s.DefaultFormats
+import org.json4s.jackson.Serialization.write
+import org.slf4j.LoggerFactory
+import org.joda.time.{DateTime, LocalDateTime}
+import org.joda.time.format.DateTimeFormat
 
+
+case class MessageBodyWrapper(key: String, value: MessageBody)
+case class MessageBody(process: String, messengerGroup: String, templateTitle: String, model: String, line: String, eqpid: String, scname: String, message: Message, time: String)
+case class Message(appcard:String="", dataframe:String="", textmessage:String="", snapshot:String="")
+
+val logger =  LoggerFactory.getLogger("MessageSender.scala")
+
+val kafkaTopic = "msg_inform"
+
+def RequestMessageToKafkaRest(msg: List[MessageBodyWrapper]): (Boolean,Int) = {
+  implicit val formats: DefaultFormats.type = DefaultFormats
+  case class KafkaRestBodyWrapper(records: List[MessageBodyWrapper])
+
+  val httpClient = HttpClientBuilder.create().setDefaultRequestConfig(AgentConfig.requestConfig).build()
+  try {
+    val apiBody = write(KafkaRestBodyWrapper(msg))
+    logger.info(s"kafka rest url : ${AgentConfig.GetKafkaRestServerAddress}")
+    logger.info(s"kafka message : $apiBody")
+    val post = new HttpPost(s"http://${AgentConfig.GetKafkaRestServerAddress}/topics/$kafkaTopic")
+    post.setHeader(HTTP.CONTENT_TYPE, "application/vnd.kafka.json.v2+json")
+    post.setEntity(new StringEntity(apiBody, "UTF-8"))
+
+    val response: CloseableHttpResponse = httpClient.execute(post)
+
+    if (response.getStatusLine.getStatusCode != 200) {
+      logger.info(s"kafka rest response: ${response.getStatusLine}")
+      (false, response.getStatusLine.getStatusCode)
+    } else {
+      logger.info(s"Sending kafka message success")
+      (true, response.getStatusLine.getStatusCode)
+    }
+  } catch {
+    case ex: Throwable =>
+      logger.warn(s"Sending kafka message exception", ex)
+      (false, 500)
+  } finally {
+    if (httpClient != null) {
+      try {
+        httpClient.close()
+      } catch {
+        case _: Exception =>
+      }
+    }
+  }
+}
+
+//args = MessageSender_Template.scala;{MessengerGroup};{templateTitle};{text message}
+def wrapper(args: List[String]) : (Boolean,String,Map[String,String]) = {
+  try {
+    logger.info(s"args : $args")
+    if (args.length == 2) {
+      val key_values = ScriptUtils.GetImmutableParams(args)
+      val scname = key_values.getOrElse("ALID", "")      
+      val msgTemplateTitle = args(1)
+      val msgGroup = args(1).replace("TEMPLATE","RECEIVER")
+      val msgText = ""
+      val currentDateTime = new DateTime()
+      val formatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss")
+      val formattedDateTime = formatter.print(currentDateTime)
+
+      logger.info(s"message info : $msgGroup, $msgText")
+
+      val message = Message(textmessage = msgText)
+      val messageBody = MessageBody(AgentConfig.Process, msgGroup, msgTemplateTitle, AgentConfig.Model, AgentConfig.Line, AgentConfig.EquipmentID, scname, message, formattedDateTime)
+      val messageBuffer = List(MessageBodyWrapper(AgentConfig.EquipmentID, messageBody))
+
+      val res = RequestMessageToKafkaRest(messageBuffer)
+      if (res._1) {
+        (true, s"Response code from MessengerServer - success", Map.empty[String, String])
+      } else {
+        (false, s"Response code from MessengerServer - failed", Map.empty[String, String])
+      }   
+    } else {
+      (false, s"args is not correct", Map.empty[String, String])  
+    }    
+  } catch {
+    case ex: Throwable =>
+      logger.warn(s"MessageSender exception", ex)
+      (false, ex.getMessage, Map.empty[String, String])
+  }  
+}
+wrapper _ 
